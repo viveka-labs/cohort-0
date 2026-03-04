@@ -1,0 +1,214 @@
+# GitHub Integration Rules
+
+## Repository Info
+
+| Field       | Value             |
+| ----------- | ----------------- |
+| Owner       | `INNOVATIVEGAMER` |
+| Repo        | `examlly`         |
+| Main Branch | `main`            |
+
+## PR Title Format
+
+PR titles MUST include the Linear issue ID in brackets for auto-linking:
+
+```
+{type}({scope}): {description} [{issue_id}]
+```
+
+**Examples:**
+
+- `feat(api): add question generation endpoint [NEX-123]`
+- `fix(auth): correct token refresh logic [NEX-456]`
+- `ci: setup GitHub Actions workflow [NEX-140]`
+
+### Commit Type Mapping
+
+| Ticket Type    | Commit Type     |
+| -------------- | --------------- |
+| Feature        | `feat`          |
+| Bug            | `fix`           |
+| Infrastructure | `chore` or `ci` |
+| Documentation  | `docs`          |
+| Refactor       | `refactor`      |
+
+## PR Body Template
+
+Standard PR body structure:
+
+```markdown
+## Summary
+
+{bullet points of what changed}
+
+## Linear Issue
+
+Closes {issue_id}
+
+## Test Plan
+
+- [ ] {verification step 1}
+- [ ] {verification step 2}
+
+🤖 Generated with Claude Code
+```
+
+## Magic Words for Linear Linking
+
+These keywords in PR body trigger Linear automation:
+
+| Keyword            | Effect on Merge     |
+| ------------------ | ------------------- |
+| `Closes NEX-###`   | Marks issue as Done |
+| `Fixes NEX-###`    | Marks issue as Done |
+| `Resolves NEX-###` | Marks issue as Done |
+
+**Always use `Closes {issue_id}` in the "Linear Issue" section.**
+
+## Auto-Linking Behavior
+
+When PR title contains `[NEX-###]`:
+
+| Event               | Linear Update                      |
+| ------------------- | ---------------------------------- |
+| PR opened (draft)   | Issue → In Progress                |
+| PR ready for review | Issue → In Review                  |
+| PR merged           | Issue → Done (if `Closes` present) |
+
+## `gh` CLI Reference
+
+### Creating PRs
+
+```bash
+gh pr create \
+  --title "{title with [issue_id]}" \
+  --head "{branch_name}" \
+  --base "main" \
+  --body "{PR body}"
+```
+
+### Fetching PR Details
+
+```bash
+gh pr view {pr_number} --json number,title,body,headRefName,baseRefName,author,url,mergedAt
+```
+
+Key fields:
+
+- `title` - PR title (extract issue ID from `[NEX-###]`)
+- `body` - PR description (extract from `Closes NEX-###`)
+- `mergedAt` - Merge timestamp (null if not merged)
+- `headRefName` - Branch name
+
+### Fetching PR Files / Diff
+
+```bash
+gh pr diff {pr_number}
+```
+
+### Creating PR Reviews
+
+```bash
+gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews \
+  --method POST \
+  --input - <<'EOF'
+{
+  "body": "{review summary}",
+  "event": "{APPROVE|COMMENT|REQUEST_CHANGES}",
+  "comments": [
+    {"path": "file.tsx", "line": 42, "body": "Issue..."}
+  ]
+}
+EOF
+```
+
+### Fetching Reviews & Comments
+
+```bash
+# Reviews (verdict + body)
+gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews
+
+# Inline comments
+gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/comments
+
+# Commits on a PR
+gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/commits
+```
+
+### Review Verdicts
+
+| Condition         | Event             |
+| ----------------- | ----------------- |
+| No issues found   | `APPROVE`         |
+| Minor issues only | `COMMENT`         |
+| Blocking issues   | `REQUEST_CHANGES` |
+
+## Commit Message Format
+
+```
+{type}({scope}): {description}
+
+{body - what was done}
+
+Closes {issue_id}
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+```
+
+**Example:**
+
+```
+feat(api): add question generation endpoint
+
+- Implements question generation with AI pipeline
+- Adds input validation and error handling
+- Includes unit tests for edge cases
+
+Closes NEX-150
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+```
+
+## Branch Operations
+
+### Push with Upstream
+
+```bash
+git push -u origin {branch_name}
+```
+
+### Delete Remote Branch (post-merge)
+
+```bash
+git push origin --delete {branch_name}
+```
+
+## PR Review Body Template
+
+```markdown
+## 🤖 Automated Code Review
+
+### Summary
+
+| Category     | Status   | Issues  |
+| ------------ | -------- | ------- |
+| Architecture | {status} | {notes} |
+| Code Quality | {status} | {notes} |
+| Testing      | {status} | {notes} |
+
+### Verdict: {APPROVED|CHANGES REQUESTED|REVIEWED}
+
+{issues or approval message}
+
+---
+
+_Review performed against: `.claude/rules/` guidelines_
+```
+
+## Do Not
+
+- Create PRs without `[{issue_id}]` in title (breaks auto-linking)
+- Forget `Closes {issue_id}` in PR body (breaks auto-done)
+- Use `Fixes` inconsistently (prefer `Closes` for consistency)
+- Skip the Test Plan section
+- Forget `Co-Authored-By` in commits
