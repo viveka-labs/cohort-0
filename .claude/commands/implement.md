@@ -11,16 +11,16 @@ Implement features and tasks using the SDE2 agent, with optional architectural g
 
 ## Input (Optional)
 
-- **$ARGUMENTS**: Linear ID, file path, or flags
+- **$ARGUMENTS**: GitHub issue number, file path, or flags
 
 ```
 Examples:
   /implement                           → Use conversation context
-  /implement NEX-150                   → Fetch from Linear ticket
+  /implement #42                       → Fetch from GitHub issue
   /implement ./specs/feature.md        → Read markdown spec
   /implement --with-architect          → Architect plans first (conversation context)
-  /implement NEX-150 --with-architect  → Linear ticket + Architect
-  /implement NEX-150 -a               → Short flag for architect
+  /implement #42 --with-architect      → GitHub issue + Architect
+  /implement #42 -a                    → Short flag for architect
 ```
 
 ## Context Detection
@@ -29,7 +29,7 @@ Parse `$ARGUMENTS` for:
 
 | Pattern                    | Context Source            |
 | -------------------------- | ------------------------- |
-| `NEX-###`                  | Linear ticket             |
+| `#123`                     | GitHub issue              |
 | `*.md` path                | Markdown spec file        |
 | `--with-architect` or `-a` | Enable architect planning |
 | (none)                     | Use conversation context  |
@@ -37,61 +37,53 @@ Parse `$ARGUMENTS` for:
 ## Flow: Default (SDE2 Only)
 
 ```
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │           Detect Context                │
-│  • Linear ticket? → Fetch ticket        │
+│  • GitHub issue? → Fetch issue          │
 │  • .md file? → Read spec                │
 │  • Otherwise → Use conversation         │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
-│           Detect Context                │
-│  • Linear ticket? → Fetch ticket        │
-│  • .md file? → Read spec                │
-│  • Otherwise → Use conversation         │
-└─────────────────┬───────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │          Spawn SDE2 Agent               │
 │  • Use Task tool with subagent_type     │
 │  • Pass context in prompt               │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │      SDE2 Executes implement skill      │
 │  • Gather requirements                  │
 │  • Explore existing code                │
 │  • Create plan (TodoWrite)              │
 │  • Implement phase by phase             │
 │  • Verify & test                        │
-└─────────────────────────────────────────┘
+└─────────────────────────────────────┘
 ```
 
 ## Flow: With Architect
 
 ```
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │      /implement --with-architect        │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │           Detect Context                │
 │  • Same detection as above               │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │    Spawn Principal Architect Agent      │
 │  • Use Task tool with subagent_type     │
 │  • Pass context in prompt               │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │    Architect Executes design-plan skill │
 │  • Understand requirements              │
 │  • Research technology context          │
@@ -101,25 +93,25 @@ Parse `$ARGUMENTS` for:
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │         WAIT for user approval          │
 │  "Does this plan look good?"            │
 └─────────────────┬───────────────────────┘
                   │ User approves
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │          Spawn SDE2 Agent               │
 │  • Use Task tool with subagent_type     │
 │  • Pass approved plan in prompt         │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
-┌─────────────────────────────────────────┐
+┌─────────────────────────────────────┐
 │    SDE2 Executes implement with plan    │
 │  • Follow architect's phases            │
 │  • Implement according to plan          │
 │  • Verify & test                        │
-└─────────────────────────────────────────┘
+└─────────────────────────────────────┘
 ```
 
 ## Execution
@@ -129,13 +121,13 @@ Parse `$ARGUMENTS` for:
 1. **Parse arguments for context:**
 
    ```
-   If NEX-### found → mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)
+   If #123 found → gh issue view 123 --json number,title,body,labels,state,url
    If .md path found → Read file content
    Otherwise → Use conversation history as context
    ```
 
 2. **Collect context to pass to agents:**
-   - Task requirements (from Linear ticket/spec/conversation)
+   - Task requirements (from GitHub issue/spec/conversation)
    - Relevant rules based on expected file changes
    - Any constraints or preferences mentioned
 
@@ -155,7 +147,7 @@ Task(
   Create an implementation plan for this task.
 
   ## Task Context
-  - Source: {Linear NEX-### | spec file | conversation}
+  - Source: {GitHub issue #123 | spec file | conversation}
   - Requirements: {task requirements}
 
   ## Instructions
@@ -185,7 +177,7 @@ Task(
   Implement this task.
 
   ## Task Context
-  - Source: {Linear NEX-### | spec file | conversation}
+  - Source: {GitHub issue #123 | spec file | conversation}
   - Requirements: {task requirements}
   {If architect plan exists:}
   - Architect Plan: {the approved plan}
@@ -218,7 +210,7 @@ After implementation is complete, output:
 
 {Include whichever applies:}
 
-- **Linear:** NEX-### - {title}
+- **GitHub Issue:** #123 - {title}
 - **Spec:** {filename.md}
 - **Request:** {brief summary}
 
@@ -259,7 +251,7 @@ After implementation is complete, output:
 
 | Error                   | Action                              |
 | ----------------------- | ----------------------------------- |
-| Linear issue not found  | Ask user to verify issue ID         |
+| GitHub issue not found  | Ask user to verify issue number     |
 | Spec file not found     | Ask user to verify file path        |
 | Unclear requirements    | Ask user for clarification          |
 | Architect plan rejected | Revise plan or ask for guidance     |

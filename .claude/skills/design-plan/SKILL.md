@@ -28,16 +28,16 @@ Create comprehensive implementation plans for complex tasks, providing architect
 
 Before planning, check for any relevant rule files in `.claude/rules/` that apply to the task area. Load and follow all applicable rules.
 
-**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md), [linear.md](../../rules/linear.md)
+**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md)
 
 ## Planning Process
 
 ### Phase 1: Understand Requirements
 
-1. **Fetch the Linear ticket if one is referenced:**
+1. **Fetch the GitHub issue if one is referenced:**
 
-   ```
-   mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)
+   ```bash
+   gh issue view {number} --json number,title,body,labels,state,url
    ```
 
 2. **Extract key information:**
@@ -135,7 +135,7 @@ Output the plan and **WAIT for user approval** before implementation.
 
 ### Task
 
-- **Linear:** {issue_id} - {title}
+- **GitHub Issue:** #{issue_number} - {title}
 - **Complexity:** {Low|Medium|High}
 - **Estimated Phases:** {count}
 

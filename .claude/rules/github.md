@@ -10,21 +10,21 @@
 
 ## PR Title Format
 
-PR titles MUST include the Linear issue ID in brackets for auto-linking:
+PR titles use conventional commit format:
 
 ```
-{type}({scope}): {description} [{issue_id}]
+{type}({scope}): {description}
 ```
 
 **Examples:**
 
-- `feat(api): add question generation endpoint [NEX-123]`
-- `fix(auth): correct token refresh logic [NEX-456]`
-- `ci: setup GitHub Actions workflow [NEX-140]`
+- `feat(api): add question generation endpoint`
+- `fix(auth): correct token refresh logic`
+- `ci: setup GitHub Actions workflow`
 
 ### Commit Type Mapping
 
-| Ticket Type    | Commit Type     |
+| Change Type    | Commit Type     |
 | -------------- | --------------- |
 | Feature        | `feat`          |
 | Bug            | `fix`           |
@@ -41,9 +41,9 @@ Standard PR body structure:
 
 {bullet points of what changed}
 
-## Linear Issue
+## GitHub Issue
 
-Closes {issue_id}
+Closes #123
 
 ## Test Plan
 
@@ -53,38 +53,96 @@ Closes {issue_id}
 🤖 Generated with Claude Code
 ```
 
-## Magic Words for Linear Linking
+## Closing Issues via PR
 
-These keywords in PR body trigger Linear automation:
+Use `Closes #123` in the PR body — GitHub automatically closes the issue when the PR merges.
 
-| Keyword            | Effect on Merge     |
-| ------------------ | ------------------- |
-| `Closes NEX-###`   | Marks issue as Done |
-| `Fixes NEX-###`    | Marks issue as Done |
-| `Resolves NEX-###` | Marks issue as Done |
+| Keyword         | Effect on Merge  |
+| --------------- | ---------------- |
+| `Closes #123`   | Closes the issue |
+| `Fixes #123`    | Closes the issue |
+| `Resolves #123` | Closes the issue |
 
-**Always use `Closes {issue_id}` in the "Linear Issue" section.**
+**Always use `Closes #123` in the "GitHub Issue" section.** Prefer `Closes` for consistency.
 
-## Auto-Linking Behavior
+## Branch Naming
 
-When PR title contains `[NEX-###]`:
+Derive branch name from the GitHub issue:
 
-| Event               | Linear Update                      |
-| ------------------- | ---------------------------------- |
-| PR opened (draft)   | Issue → In Progress                |
-| PR ready for review | Issue → In Review                  |
-| PR merged           | Issue → Done (if `Closes` present) |
+```
+{username}/issue-{number}-{slugified-title}
+```
+
+**Example:** `prasad/issue-42-add-question-generation`
+
+Or use the GitHub CLI to generate the branch automatically:
+
+```bash
+gh issue develop 42
+```
+
+## Issue Labels
+
+| Label              | Usage                            |
+| ------------------ | -------------------------------- |
+| `bug`              | Something is broken or incorrect |
+| `enhancement`      | New feature or improvement       |
+| `good first issue` | Suitable for new contributors    |
+| `question`         | Further information needed       |
+| `documentation`    | Documentation-only changes       |
+| `help wanted`      | Extra attention needed           |
+
+## Issue Extraction
+
+When extracting a GitHub issue number from a PR or user input:
+
+| Source     | Pattern                     | Priority        |
+| ---------- | --------------------------- | --------------- |
+| PR Body    | `Closes #123`, `Fixes #123` | 1st (preferred) |
+| PR Body    | `#123` (standalone)         | 2nd             |
+| User Input | Direct input                | Fallback        |
+
+**Extraction order:**
+
+1. Check PR body for `Closes #123` or `Fixes #123`
+2. Check PR body for standalone `#123`
+3. If not found, ask user
 
 ## `gh` CLI Reference
+
+All GitHub interactions use the `gh` CLI. Authenticate with `gh auth login`.
+
+### Fetching Issues
+
+```bash
+gh issue view 123 --json number,title,body,labels,state,url
+```
+
+Key fields: `title`, `body`, `labels`, `state`, `url`
+
+### Adding Comments to Issues
+
+```bash
+gh issue comment 123 --body "Comment text..."
+```
 
 ### Creating PRs
 
 ```bash
 gh pr create \
-  --title "{title with [issue_id]}" \
-  --head "{branch_name}" \
-  --base "main" \
-  --body "{PR body}"
+  --title "feat(api): add search endpoint" \
+  --body "$(cat <<'EOF'
+## Summary
+- ...
+
+## GitHub Issue
+Closes #123
+
+## Test Plan
+- [ ] ...
+EOF
+)" \
+  --base main
 ```
 
 ### Fetching PR Details
@@ -93,17 +151,18 @@ gh pr create \
 gh pr view {pr_number} --json number,title,body,headRefName,baseRefName,author,url,mergedAt
 ```
 
-Key fields:
+Key fields: `title`, `body` (extract issue number from `Closes #123`), `mergedAt`, `headRefName`
 
-- `title` - PR title (extract issue ID from `[NEX-###]`)
-- `body` - PR description (extract from `Closes NEX-###`)
-- `mergedAt` - Merge timestamp (null if not merged)
-- `headRefName` - Branch name
-
-### Fetching PR Files / Diff
+### Fetching PR Diff
 
 ```bash
 gh pr diff {pr_number}
+```
+
+For a structured file list:
+
+```bash
+gh pr view {pr_number} --json files
 ```
 
 ### Creating PR Reviews
@@ -150,7 +209,7 @@ gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/commits
 
 {body - what was done}
 
-Closes {issue_id}
+Closes #{issue_number}
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
@@ -164,7 +223,7 @@ feat(api): add question generation endpoint
 - Adds input validation and error handling
 - Includes unit tests for edge cases
 
-Closes NEX-150
+Closes #42
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
@@ -207,8 +266,7 @@ _Review performed against: `.claude/rules/` guidelines_
 
 ## Do Not
 
-- Create PRs without `[{issue_id}]` in title (breaks auto-linking)
-- Forget `Closes {issue_id}` in PR body (breaks auto-done)
+- Forget `Closes #123` in PR body (breaks auto-close on merge)
 - Use `Fixes` inconsistently (prefer `Closes` for consistency)
 - Skip the Test Plan section
 - Forget `Co-Authored-By` in commits

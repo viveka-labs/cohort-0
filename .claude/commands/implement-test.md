@@ -10,13 +10,13 @@ Implement tests using the Tester agent, focusing on result validation over code 
 
 ## Input (Optional)
 
-- **$ARGUMENTS**: Testing plan file, Linear ID, source file path, or description
+- **$ARGUMENTS**: Testing plan file, GitHub issue number, source file path, or description
 
 ```
 Examples:
   /implement-test                              → Use conversation context
   /implement-test ./docs/TESTING_PLAN.md       → Follow testing plan
-  /implement-test NEX-141                      → Fetch from Linear ticket
+  /implement-test #42                          → Fetch from GitHub issue
   /implement-test src/module.ts                → Write tests for module
   /implement-test "tests for search pipeline"  → Description
 ```
@@ -28,7 +28,7 @@ Parse `$ARGUMENTS` for:
 | Pattern            | Context Source            |
 | ------------------ | ------------------------- |
 | `*.md` path        | Testing plan or spec file |
-| `NEX-###`          | Linear ticket             |
+| `#123`             | GitHub issue              |
 | `*.ts` or `*.tsx`  | Source file to test       |
 | String description | Use as requirements       |
 | (none)             | Use conversation context  |
@@ -44,7 +44,7 @@ Parse `$ARGUMENTS` for:
 ┌─────────────────────────────────────────┐
 │           Detect Context                │
 │  • Testing plan? → Read plan            │
-│  • Linear ticket? → Fetch ticket         │
+│  • GitHub issue? → Fetch issue          │
 │  • Source file? → Read file             │
 │  • Otherwise → Use conversation         │
 └─────────────────┬───────────────────────┘
@@ -75,7 +75,7 @@ Parse `$ARGUMENTS` for:
 
    ```
    If .md file → Read testing plan
-   If NEX-### → mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)
+   If #123 → gh issue view 123 --json number,title,body,labels,state,url
    If .ts/.tsx file → Read source file to understand what to test
    Otherwise → Use conversation history as context
    ```
@@ -101,7 +101,7 @@ Task(
   Implement tests for this target.
 
   ## Context
-  - Source: {testing plan / ticket / source file / conversation}
+  - Source: {testing plan / GitHub issue / source file / conversation}
   - Package: {detected package type}
   - Target: {what needs tests}
 
@@ -142,7 +142,7 @@ After tests are implemented, output:
 
 ### Context
 
-- **Source:** {Testing plan / Linear ticket / Source file / Conversation}
+- **Source:** {Testing plan / GitHub issue / Source file / Conversation}
 
 ### Test Files Created/Modified
 
@@ -190,7 +190,7 @@ All tests passing: ✅
 | ------------------------ | -------------------------------------- |
 | Testing plan not found   | Ask user to verify file path           |
 | Source file not found    | Ask user to verify file path           |
-| Linear issue not found   | Ask user to verify issue ID            |
+| GitHub issue not found   | Ask user to verify issue number        |
 | Unclear what to test     | Ask user for clarification             |
 | Tests failing            | Debug and fix (no skipping tests!)     |
 | Flaky tests              | Fix the flakiness, don't add retries   |

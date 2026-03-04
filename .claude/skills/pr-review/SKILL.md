@@ -26,7 +26,7 @@ Review pull requests to ensure code quality, architectural soundness, and adhere
 ## Review Process
 
 1. **Understand the context**
-   - Read PR description and linked tickets
+   - Read PR description and linked GitHub issues
    - Understand what problem is being solved
    - Check the scope of changes
 

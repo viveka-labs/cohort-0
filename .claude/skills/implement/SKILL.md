@@ -1,6 +1,6 @@
 ---
 name: implement
-description: Implement features and tasks with production-quality code. Use when implementing features, building components, or any task requiring code implementation from any context source (Linear tickets, markdown specs, or conversation).
+description: Implement features and tasks with production-quality code. Use when implementing features, building components, or any task requiring code implementation from any context source (GitHub issues, markdown specs, or conversation).
 allowed-tools:
   - Read
   - Grep
@@ -30,17 +30,17 @@ Implement features and tasks with production-quality code, following codebase co
 
 This skill works with multiple input types:
 
-| Source             | Detection                  | How to Extract                                              |
-| ------------------ | -------------------------- | ----------------------------------------------------------- |
-| **Linear ticket**  | `NEX-###` pattern in input | `mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)` |
-| **Markdown file**  | `.md` file path referenced | Read the file content                                       |
-| **Conversation**   | Requirements in chat       | Parse from conversation history                             |
+| Source             | Detection                  | How to Extract                                                     |
+| ------------------ | -------------------------- | ------------------------------------------------------------------ |
+| **GitHub issue**   | `#123` pattern in input    | `gh issue view 123 --json number,title,body,labels,state,url`      |
+| **Markdown file**  | `.md` file path referenced | Read the file content                                              |
+| **Conversation**   | Requirements in chat       | Parse from conversation history                                    |
 
 ## Task-Specific Rules
 
 Before writing any code, check for relevant rule files in `.claude/rules/` that apply to the area you're implementing. Load and follow all applicable rules.
 
-**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md), [linear.md](../../rules/linear.md)
+**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md)
 
 ## Agent Delegation
 
@@ -70,7 +70,7 @@ Coordinator → Spawn SDE2 "implement phase X" → SDE2 implements → Returns r
 Implement phase: {phase_name}
 
 Context:
-- Spec/ticket: {reference}
+- Spec/issue: {reference}
 - Todo: {current todo item}
 - Rules to follow: {list of rule files}
 
@@ -98,19 +98,19 @@ After completion, provide:
 1. **Detect context source:**
 
    ```
-   If NEX-### pattern → Fetch Linear ticket
+   If #123 pattern → Fetch GitHub issue
    If .md file referenced → Read markdown file
    Otherwise → Use conversation context
    ```
 
-2. **If Linear ticket:**
+2. **If GitHub issue:**
 
-   ```
-   mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)
+   ```bash
+   gh issue view {number} --json number,title,body,labels,state,url
    ```
 
-   - Extract requirements and acceptance criteria from ticket description
-   - Check for linked designs or references in ticket links/attachments
+   - Extract requirements and acceptance criteria from issue body
+   - Check for linked designs or references
 
 3. **If Markdown file:**
    - Read the referenced file
@@ -228,7 +228,7 @@ After implementation is complete:
 
 {Include whichever applies:}
 
-- **Linear:** NEX-### - {title}
+- **GitHub Issue:** #123 - {title}
 - **Spec:** {filename.md}
 - **Request:** {brief summary of what was asked}
 

@@ -31,7 +31,7 @@ This skill works with multiple input types:
 | Source             | Detection                  | How to Extract                                                      |
 | ------------------ | -------------------------- | ------------------------------------------------------------------- |
 | **Testing plan**   | `.md` file with test plan  | Read the file content                                               |
-| **Linear ticket**  | `NEX-###` pattern in input | `mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)`  |
+| **GitHub issue**   | `#123` pattern in input    | `gh issue view 123 --json number,title,body,labels,state,url`      |
 | **Source code**    | File path to code to test  | Read the source file                                                |
 | **Conversation**   | Requirements in chat       | Parse from conversation history                                     |
 
@@ -50,7 +50,7 @@ Based on what you're testing, different patterns apply:
 
 Before writing any tests, check for relevant rule files in `.claude/rules/` that apply to the area you're testing. Load and follow all applicable rules (e.g., testing conventions, domain patterns).
 
-**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md), [linear.md](../../rules/linear.md)
+**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md)
 
 ## Agent Delegation
 
@@ -68,7 +68,7 @@ Coordinator → Spawn Tester "implement tests for X" → Tester implements → R
 Implement tests for: {target}
 
 Context:
-- Source: {testing plan / ticket / source file / conversation}
+- Source: {testing plan / GitHub issue / source file / conversation}
 - Package: {detected package type}
 - Rules to follow: {list of rule files}
 
@@ -96,7 +96,7 @@ After completion, provide:
    ```
    If testing plan provided → Read and understand requirements
    If source file provided → Read and understand the code
-   If Linear ticket (NEX-###) → Fetch ticket details via mcp__linear__get_issue
+   If GitHub issue (#123) → Fetch issue via gh issue view
    Otherwise → Clarify with user what needs tests
    ```
 

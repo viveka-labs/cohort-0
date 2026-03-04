@@ -57,7 +57,7 @@ If no PR number provided, ask the user for it.
    gh pr view {pr_number} --json number,title,body,headRefName,baseRefName,author,url
    ```
 
-2. **Extract Linear issue** from PR title `[NEX-###]` or body `Closes NEX-###`
+2. **Extract GitHub issue** from PR body (`Closes #123`)
 
 3. **Get all review feedback:**
 
@@ -85,7 +85,7 @@ Task(
   ## PR Details
   - Title: {pr_title}
   - Branch: {branch_name}
-  - Linear Issue: {issue_id}
+  - GitHub Issue: #{issue_number}
 
   ## Review Issues to Fix
 

@@ -37,7 +37,6 @@
       "Bash(pwd)",
       "Bash(which:*)",
       "Bash(mkdir:*)",
-      "mcp__linear__*",
       "mcp__figma__*",
       "Bash(gh:*)",
       "Write(packages/react/**)",

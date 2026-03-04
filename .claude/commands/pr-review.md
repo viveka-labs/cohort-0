@@ -11,19 +11,17 @@ Comprehensive code review using dual-agent analysis. Auto-detects context based 
 
 ## Required Input
 
-- **PR Number or Linear Issue ID**: $ARGUMENTS (e.g., `5` or `NEX-140`)
+- **PR Number**: $ARGUMENTS (e.g., `5`)
 - **Optional flag**: `--follow-up` or `-f` for re-review after changes
 
 ```
 Examples:
   /pr-review 5                → Full review by PR number
-  /pr-review NEX-140          → Full review by Linear ID (finds linked PR)
   /pr-review 5 --follow-up    → Follow-up review (after changes pushed)
   /pr-review 5 -f             → Follow-up (short flag)
-  /pr-review NEX-140 -f       → Follow-up by Linear ID
 ```
 
-If no input provided, ask the user for the PR number or Linear ID.
+If no input provided, ask the user for the PR number.
 
 ## Mode Detection
 
@@ -47,13 +45,13 @@ If no input provided, ask the user for the PR number or Linear ID.
 2. **Extract:**
    - PR title and description
    - Base and head branches
-   - Linked Linear issue (from title `[NEX-###]` or body `Closes NEX-###`)
+   - Linked GitHub issue (from body `Closes #123`)
    - PR author
 
-3. **If Linear issue linked, fetch it:**
+3. **If GitHub issue linked, fetch it:**
 
-   ```
-   mcp__linear__get_issue(id: "{issue_id}", includeRelations: true)
+   ```bash
+   gh issue view {issue_number} --json number,title,body,labels,state,url
    ```
 
    - Understand what was requested
@@ -71,7 +69,7 @@ If no input provided, ask the user for the PR number or Linear ID.
 
 3. **Auto-detect context and load rules:**
 
-   Check `.claude/rules/` for any rule files relevant to the changed files. Load and follow all applicable rules. Always load [workflow.md](../rules/workflow.md), [github.md](../rules/github.md), [linear.md](../rules/linear.md).
+   Check `.claude/rules/` for any rule files relevant to the changed files. Load and follow all applicable rules. Always load [workflow.md](../rules/workflow.md), [github.md](../rules/github.md).
 
 ### Phase 3: Principal Architect Review
 
@@ -87,14 +85,14 @@ Task(
   ## PR Details
   - Title: {pr_title}
   - Description: {pr_description}
-  - Linear Issue: {issue_id}
+  - GitHub Issue: #{issue_number}
 
   ## Changed Files
   {list of changed files with patches}
 
   ## Context
   - Loaded rules: {rules loaded based on files changed}
-  - Ticket requirements: {from Linear issue if available}
+  - Issue requirements: {from GitHub issue if available}
 
   ## Instructions
   1. Read the pr-review skill at `.claude/skills/pr-review/SKILL.md`
@@ -120,14 +118,14 @@ Task(
   ## PR Details
   - Title: {pr_title}
   - Description: {pr_description}
-  - Linear Issue: {issue_id}
+  - GitHub Issue: #{issue_number}
 
   ## Changed Files
   {list of changed files with patches}
 
   ## Context
   - Loaded rules: {rules loaded based on files changed}
-  - Ticket requirements: {from Linear issue if available}
+  - Issue requirements: {from GitHub issue if available}
 
   ## Instructions
   1. Read the pr-review skill at `.claude/skills/pr-review/SKILL.md`
@@ -396,7 +394,7 @@ EOF
 ### Links
 
 - **PR:** {pr_url}
-- **Linear:** {linear_url}
+- **GitHub Issue:** #{issue_number}
 ```
 
 ### Follow-up Review Output
@@ -427,7 +425,7 @@ EOF
 ### Links
 
 - **PR:** {pr_url}
-- **Linear:** {linear_url}
+- **GitHub Issue:** #{issue_number}
 ```
 
 ---
@@ -439,5 +437,5 @@ EOF
 3. **Be constructive** - Explain why, not just what
 4. **Prioritize** - Blocking issues vs nice-to-haves
 5. **Follow loaded rules** - Rules files are source of truth
-6. **Consider context** - Understand the ticket's goals
+6. **Consider context** - Understand the issue's goals
 7. **In follow-up mode** - Focus on changes, don't repeat old feedback
