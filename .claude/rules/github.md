@@ -4,9 +4,15 @@
 
 | Field       | Value             |
 | ----------- | ----------------- |
-| Owner       | `INNOVATIVEGAMER` |
-| Repo        | `examlly`         |
+| Owner       | Inferred from `git remote` — do not hardcode |
+| Repo        | Inferred from `git remote` — do not hardcode |
 | Main Branch | `main`            |
+
+**Resolve `{owner}` and `{repo}` at runtime:**
+
+```bash
+gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"'
+```
 
 ## PR Title Format
 
@@ -168,7 +174,7 @@ gh pr view {pr_number} --json files
 ### Creating PR Reviews
 
 ```bash
-gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews \
+gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews \
   --method POST \
   --input - <<'EOF'
 {
@@ -185,13 +191,13 @@ EOF
 
 ```bash
 # Reviews (verdict + body)
-gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews
+gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews
 
 # Inline comments
-gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/comments
+gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
 
 # Commits on a PR
-gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/commits
+gh api repos/{owner}/{repo}/pulls/{pr_number}/commits
 ```
 
 ### Review Verdicts

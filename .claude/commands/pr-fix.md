@@ -62,8 +62,8 @@ If no PR number provided, ask the user for it.
 3. **Get all review feedback:**
 
    ```bash
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/comments
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
    ```
 
 4. **Get changed files:**

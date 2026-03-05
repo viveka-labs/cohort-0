@@ -172,7 +172,7 @@ Review against:
 1. **Post Principal Architect review:**
 
    ```bash
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews \
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews \
      --method POST \
      --input - <<'EOF'
    {
@@ -188,7 +188,7 @@ Review against:
 2. **Post SDE2 review:**
 
    ```bash
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews \
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews \
      --method POST \
      --input - <<'EOF'
    {
@@ -230,13 +230,13 @@ When developer pushes changes after initial review, use follow-up mode to focus 
 2. **Fetch previous reviews:**
 
    ```bash
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews
    ```
 
 3. **Fetch review comments:**
 
    ```bash
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/comments
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
    ```
 
 4. **Parse previous review data:**
@@ -250,7 +250,7 @@ When developer pushes changes after initial review, use follow-up mode to focus 
 1. **Get commits since last review:**
 
    ```bash
-   gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/commits
+   gh api repos/{owner}/{repo}/pulls/{pr_number}/commits
    ```
 
    - Filter to commits after last review timestamp
@@ -349,7 +349,7 @@ Task(
 ### Phase F5: Post Follow-up Review
 
 ```bash
-gh api repos/INNOVATIVEGAMER/examlly/pulls/{pr_number}/reviews \
+gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews \
   --method POST \
   --input - <<'EOF'
 {
