@@ -44,6 +44,23 @@ export async function toggleUpvote(buildId: string, userId: string) {
     .insert({ build_id: buildId, user_id: userId });
 
   if (insertError) {
+    // Handle race condition: if a concurrent request already inserted the
+    // upvote, we get a 23505 unique_violation. Treat this as "already
+    // upvoted" and fall through to remove it instead.
+    if (insertError.code === "23505") {
+      const { error: deleteError } = await supabase
+        .from("upvotes")
+        .delete()
+        .eq("build_id", buildId)
+        .eq("user_id", userId);
+
+      if (deleteError) {
+        return { data: null, error: deleteError };
+      }
+
+      return { data: { upvoted: false }, error: null };
+    }
+
     return { data: null, error: insertError };
   }
 

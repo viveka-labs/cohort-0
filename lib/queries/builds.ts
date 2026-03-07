@@ -24,7 +24,7 @@ export async function getBuilds() {
       tech_stack_tags:build_tech_stack_tags(
         ...tech_stack_tags(*)
       ),
-      upvotes(count)
+      upvotes(build_id)
     `
     )
     .order("created_at", { ascending: false });
@@ -39,7 +39,7 @@ export async function getBuilds() {
     screenshots: build.screenshots,
     ai_tools: build.ai_tools,
     tech_stack_tags: build.tech_stack_tags,
-    upvote_count: build.upvotes[0]?.count ?? 0,
+    upvote_count: build.upvotes.length,
   }));
 
   return { data: builds, error: null };
@@ -65,7 +65,7 @@ export async function getBuildById(id: string) {
       tech_stack_tags:build_tech_stack_tags(
         ...tech_stack_tags(*)
       ),
-      upvotes(count)
+      upvotes(build_id)
     `
     )
     .eq("id", id)
@@ -81,7 +81,7 @@ export async function getBuildById(id: string) {
     screenshots: data.screenshots,
     ai_tools: data.ai_tools,
     tech_stack_tags: data.tech_stack_tags,
-    upvote_count: data.upvotes[0]?.count ?? 0,
+    upvote_count: data.upvotes.length,
   };
 
   return { data: build, error: null };
@@ -89,6 +89,9 @@ export async function getBuildById(id: string) {
 
 /**
  * Creates a new build. Returns the inserted row.
+ *
+ * Callers must set `user_id` on `data` from the authenticated session
+ * (e.g. via `requireUser()`). RLS enforces ownership.
  */
 export async function createBuild(data: BuildInsert) {
   const supabase = await createClient();
@@ -98,6 +101,9 @@ export async function createBuild(data: BuildInsert) {
 
 /**
  * Updates an existing build by ID. Returns the updated row.
+ *
+ * Callers must ensure `user_id` on `data` matches the authenticated session.
+ * RLS enforces ownership — only the build owner can update.
  */
 export async function updateBuild(id: string, data: BuildUpdate) {
   const supabase = await createClient();
@@ -106,10 +112,11 @@ export async function updateBuild(id: string, data: BuildUpdate) {
 }
 
 /**
- * Deletes a build by ID.
+ * Deletes a build by ID. Returns the deleted row, or an error if
+ * the build was not found or RLS blocked the deletion.
  */
 export async function deleteBuild(id: string) {
   const supabase = await createClient();
 
-  return supabase.from("builds").delete().eq("id", id);
+  return supabase.from("builds").delete().eq("id", id).select().single();
 }

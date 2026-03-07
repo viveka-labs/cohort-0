@@ -30,10 +30,11 @@ export async function createComment(data: CommentInsert) {
 }
 
 /**
- * Deletes a comment by ID.
+ * Deletes a comment by ID. Returns the deleted row, or an error if
+ * the comment was not found or RLS blocked the deletion.
  */
 export async function deleteComment(id: string) {
   const supabase = await createClient();
 
-  return supabase.from("comments").delete().eq("id", id);
+  return supabase.from("comments").delete().eq("id", id).select().single();
 }
