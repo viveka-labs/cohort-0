@@ -1,7 +1,6 @@
 ---
 name: pr-review-guide
 description: Review pull requests for code quality and architecture. Use when reviewing PRs, checking code changes, or evaluating pull requests.
-model: claude-opus-4-6
 allowed-tools:
   - Read
   - Grep

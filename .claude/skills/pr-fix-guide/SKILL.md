@@ -1,7 +1,6 @@
 ---
 name: pr-fix-guide
 description: Fix issues identified in PR reviews, addressing blocking and minor concerns. Use after receiving PR review feedback or when PR has requested changes.
-model: claude-opus-4-6
 allowed-tools:
   - Read
   - Grep
@@ -66,16 +65,7 @@ Before fixing, check for relevant rule files in `.claude/rules/` that apply to t
    | Blocking ❌ | "must", "required", "blocking", REQUEST_CHANGES | Fix first  |
    | Minor ⚠️    | "consider", "suggestion", "nit", COMMENT        | Fix second |
 
-3. **Create fix plan with TodoWrite:**
-
-   ```
-   - [ ] Fix: {blocking issue 1}
-   - [ ] Fix: {blocking issue 2}
-   - [ ] Fix: {minor issue 1}
-   - [ ] Verify all fixes
-   ```
-
-4. **WAIT for user confirmation before proceeding**
+3. **Order fixes:** blocking issues first, minor issues second.
 
 ### Phase 3: Load Context
 
@@ -98,9 +88,8 @@ Before fixing, check for relevant rule files in `.claude/rules/` that apply to t
    - Summarize what was changed
 
 3. **After each fix:**
-   - Provide summary with code snippets
+   - Note what was changed and why
    - Include file:line references
-   - WAIT for user confirmation
 
 ### Phase 5: Verify Fixes
 

@@ -52,41 +52,6 @@ Before writing any tests, check for relevant rule files in `.claude/rules/` that
 
 **Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md)
 
-## Agent Delegation
-
-Test implementation is delegated to the **Tester agent** for testing expertise.
-
-### Flow
-
-```
-Coordinator → Spawn Tester "implement tests for X" → Tester implements → Returns result → Show user → User feedback
-```
-
-### Tester Task Prompt Template
-
-```
-Implement tests for: {target}
-
-Context:
-- Source: {testing plan / GitHub issue / source file / conversation}
-- Package: {detected package type}
-- Rules to follow: {list of rule files}
-
-Requirements:
-{what needs test coverage}
-
-Focus on:
-1. Result validation over code coverage
-2. Real fixtures, not synthetic data
-3. Partial matching where appropriate
-4. Mock only external boundaries
-
-After completion, provide:
-1. Summary table of test files created/modified
-2. Key test patterns used
-3. Coverage of scenarios (happy path, errors, edge cases)
-```
-
 ## Implementation Process
 
 ### Phase 1: Understand What to Test
@@ -133,27 +98,14 @@ After completion, provide:
    - Don't mock internal functions
    - Mocks must implement real interfaces
 
-### Phase 3: Create Test Plan
+### Phase 3: Implement Tests
 
-1. **Use TodoWrite to create task list:**
-
-   ```
-   - [ ] Set up test file and imports
-   - [ ] Create fixtures/mocks needed
-   - [ ] Implement happy path tests
-   - [ ] Implement error case tests
-   - [ ] Implement edge case tests
-   - [ ] Run tests and verify passing
-   ```
-
-2. **WAIT for user confirmation before proceeding**
-
-### Phase 4: Implement Tests
-
-1. **Work through todos one at a time:**
-   - Mark todo as `in_progress` before starting
-   - Mark as `completed` immediately after finishing
-   - Summarize what was done after each
+1. **Work through systematically:**
+   - Set up test file and imports
+   - Create fixtures/mocks needed
+   - Implement happy path tests
+   - Implement error case tests
+   - Implement edge case tests
 
 2. **Follow testing principles:**
    - Assert on results, not implementation
@@ -189,7 +141,7 @@ After completion, provide:
    });
    ```
 
-### Phase 5: Verify Tests
+### Phase 4: Verify Tests
 
 1. **Run tests:**
 

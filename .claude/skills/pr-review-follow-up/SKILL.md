@@ -1,7 +1,6 @@
 ---
 name: pr-review-follow-up
 description: Follow-up PR review to verify fixes after changes are pushed. Use when re-reviewing a PR after initial review feedback has been addressed.
-model: claude-opus-4-6
 allowed-tools:
   - Read
   - Grep

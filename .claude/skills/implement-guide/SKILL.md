@@ -1,7 +1,6 @@
 ---
 name: implement-guide
-description: Implement features and tasks with production-quality code. Use when implementing features, building components, or any task requiring code implementation from any context source (GitHub issues, markdown specs, or conversation).
-model: claude-opus-4-6
+description: Implement a single task with production-quality code. Used by SDE2 when called by the implement command coordinator for each task in the plan.
 allowed-tools:
   - Read
   - Grep
@@ -14,253 +13,92 @@ allowed-tools:
 user-invocable: false
 ---
 
-# Implement
+# Implement Guide
 
 ## Purpose
 
-Implement features and tasks with production-quality code, following codebase conventions and best practices. Works with any context source.
+Implement a single task from an approved plan. You receive a specific task, context of what's already been built, and the full plan. Explore, research, implement, verify, and return a summary.
 
-## When to Use
+## Process
 
-- Implementing new features (from any source)
-- Building new components, hooks, or utilities
-- Adding functionality to existing code
-- Any task that requires writing code
+### Step 1: Understand the Task
 
-## Context Sources
+Read the task description and all context provided:
 
-This skill works with multiple input types:
+- What exactly needs to be built
+- What's already been completed (from `completed_tasks_log`)
+- Architectural notes from the plan
+- How your task fits into the overall feature
 
-| Source            | Detection                  | How to Extract                                                |
-| ----------------- | -------------------------- | ------------------------------------------------------------- |
-| **GitHub issue**  | `#123` pattern in input    | `gh issue view 123 --json number,title,body,labels,state,url` |
-| **Markdown file** | `.md` file path referenced | Read the file content                                         |
-| **Conversation**  | Requirements in chat       | Parse from conversation history                               |
+Do not start coding yet.
 
-## Task-Specific Rules
+### Step 2: Explore Existing Code
 
-Before writing any code, check for relevant rule files in `.claude/rules/` that apply to the area you're implementing. Load and follow all applicable rules.
+Before writing anything:
 
-**Always load:** [workflow.md](../../rules/workflow.md), [github.md](../../rules/github.md)
+1. Find similar implementations — how do existing features work?
+2. Identify reusable utilities, hooks, and types
+3. Note file structure and naming conventions
+4. Understand patterns already established by completed tasks (check the diff provided)
 
-## Agent Delegation
+### Step 3: Research Dependencies (MANDATORY)
 
-Implementation phases are delegated to the **SDE2 agent** for strict convention adherence.
-
-### Flow
+Before writing any code, research every third-party dependency you will use:
 
 ```
-Coordinator → Spawn SDE2 "implement phase X" → SDE2 implements → Returns result → Show user → User feedback → Spawn/Resume SDE2 with feedback
+"{library} best practices {current year}"
+"{library} {version} documentation"
+"{library} common mistakes"
 ```
 
-### How It Works
+This is mandatory — do not guess how a library works. Verify correct usage, configuration options, and common pitfalls.
 
-| Step | Actor       | Action                                                                               |
-| ---- | ----------- | ------------------------------------------------------------------------------------ |
-| 1    | Coordinator | Gathers requirements, creates todo list, gets user approval on plan                  |
-| 2    | Coordinator | Spawns SDE2 agent for first implementation phase                                     |
-| 3    | SDE2        | Implements the phase following all conventions                                       |
-| 4    | SDE2        | Returns summary with code snippets and file:line refs                                |
-| 5    | Coordinator | Relays summary to user                                                               |
-| 6    | User        | Reviews, provides feedback or approves                                               |
-| 7    | Coordinator | If changes needed: resume SDE2 with feedback. If approved: spawn SDE2 for next phase |
+### Step 4: Implement
 
-### SDE2 Task Prompt Template
+1. Follow existing patterns in the codebase exactly
+2. Use proper TypeScript types — no `any`
+3. Handle errors appropriately
+4. Keep code readable and explicit
+5. Implement **only this task** — do not begin the next one
 
-```
-Implement phase: {phase_name}
+### Step 5: Verify
 
-Context:
-- Spec/issue: {reference}
-- Todo: {current todo item}
-- Rules to follow: {list of rule files}
+Run after completing:
 
-Requirements:
-{phase-specific requirements}
-
-After completion, provide:
-1. Summary table of changes (file | change)
-2. Key code snippets with file:line references
-3. Any issues encountered
+```bash
+yarn typecheck    # TypeScript
+yarn lint         # ESLint
 ```
 
-### When to Resume vs New Spawn
-
-| Situation                              | Action                                |
-| -------------------------------------- | ------------------------------------- |
-| User requests changes to current phase | Resume same SDE2 agent with feedback  |
-| Moving to next phase                   | Spawn new SDE2 agent                  |
-| Bug fix in previously completed phase  | Spawn new SDE2 agent with fix context |
-
-## Implementation Process
-
-### Phase 1: Gather Requirements
-
-1. **Detect context source:**
-
-   ```
-   If #123 pattern → Fetch GitHub issue
-   If .md file referenced → Read markdown file
-   Otherwise → Use conversation context
-   ```
-
-2. **If GitHub issue:**
-
-   ```bash
-   gh issue view {number} --json number,title,body,labels,state,url
-   ```
-
-   - Extract requirements and acceptance criteria from issue body
-   - Check for linked designs or references
-
-3. **If Markdown file:**
-   - Read the referenced file
-   - Extract requirements and acceptance criteria
-
-4. **If conversation context:**
-   - Summarize what the user is asking for
-   - Clarify any ambiguous requirements before proceeding
-
-5. **Extract key information:**
-   - What needs to be built?
-   - Acceptance criteria (explicit or inferred)
-   - Any design references?
-   - Constraints or dependencies?
-
-### Phase 2: Explore Existing Code
-
-1. **Find similar implementations:**
-   - How do existing features in this codebase work?
-   - What patterns are already established?
-
-2. **Identify dependencies:**
-   - What existing utilities/hooks can be reused?
-   - Are there shared types to extend?
-
-3. **Note the file structure:**
-   - Where should new files go?
-   - What's the naming convention?
-
-### Phase 3: Research Dependencies (MANDATORY)
-
-**Before writing any code, research any third-party dependencies you'll be using.**
-
-1. **Identify what you'll use:**
-   - What libraries/frameworks does this feature require?
-   - Any new dependencies being introduced?
-   - Any existing dependencies you're unfamiliar with?
-
-2. **Research each one:**
-
-   ```
-   "{library} best practices {current year}"
-   "{library} {version} documentation"
-   "{library} common mistakes"
-   ```
-
-3. **Verify correct usage:**
-   - How should this library be used?
-   - Are there configuration options to consider?
-   - What are common pitfalls to avoid?
-
-4. **Document findings:**
-   - Note any important discoveries
-   - Include in implementation plan if relevant
-
-### Phase 4: Create Implementation Plan
-
-1. **Use TodoWrite to create task list:**
-   - Break down into small, testable chunks
-   - Each todo should be completable independently
-   - Include testing as explicit todos
-
-2. **Example plan structure:**
-
-   ```
-   - [ ] Create main implementation file
-   - [ ] Add core functionality
-   - [ ] Add tests/stories
-   - [ ] Update exports
-   ```
-
-3. **WAIT for user confirmation before proceeding**
-
-### Phase 5: Implement
-
-1. **Work through todos one at a time:**
-   - Mark todo as `in_progress` before starting
-   - Mark as `completed` immediately after finishing
-   - Summarize what was done after each
-
-2. **Follow the loaded rules strictly:**
-   - Rules files contain all conventions
-   - Don't deviate from established patterns
-   - Include proper TypeScript types
-
-3. **After each significant change:**
-   - Provide summary with code snippets
-   - Include file:line references
-   - WAIT for user confirmation
-
-### Phase 6: Verify & Test
-
-1. **Run relevant checks:**
-
-   ```bash
-   yarn typecheck          # TypeScript
-   yarn lint               # ESLint
-   yarn test               # All tests
-   ```
-
-2. **Fix any issues found**
-
-3. **Verify against acceptance criteria:**
-   - Does implementation meet all requirements?
-   - Any edge cases missed?
+Fix all errors before returning your summary.
 
 ## Output Format
 
-After implementation is complete:
+Return this structure:
 
 ```markdown
-## Implementation Complete
+### Task Complete: {task name}
 
-### Task Reference
+#### Changes Made
+| File | Change |
+|------|--------|
+| `path/to/file.tsx` | {description} |
 
-{Include whichever applies:}
+#### Key Code
+{Most important snippet with file:line reference}
 
-- **GitHub Issue:** #123 - {title}
-- **Spec:** {filename.md}
-- **Request:** {brief summary of what was asked}
+#### Verification
+- TypeScript: {No errors | N errors fixed}
+- Lint: {No warnings | N warnings fixed}
 
-### Changes Made
-
-| File                    | Change        |
-| ----------------------- | ------------- |
-| `path/to/file.tsx`      | {description} |
-| `path/to/file.test.tsx` | {description} |
-
-### Key Code
-
-{Relevant code snippets with file:line references}
-
-### Verification
-
-- [ ] TypeScript: No errors
-- [ ] Lint: No warnings
-- [ ] Tests: All passing
-- [ ] Requirements: Met
-
-### Next Steps
-
-{Any follow-up items or notes for the user}
+#### Notes
+{Decisions made, patterns established, or anything the next task should know}
 ```
 
-## Principles to Follow
+## Principles
 
-1. **Read before write** — Understand existing patterns first
-2. **Research before coding** — Don't guess how libraries work; look them up
-3. **Follow loaded rules** — Rules files are the source of truth for conventions
-4. **Ask when unsure** — Better to clarify than assume
-5. **Small iterations** — Complete one todo, summarize, wait for confirmation
-6. **Context-agnostic** — Same quality regardless of input source
+1. **Read before write** — understand existing patterns first
+2. **Research before coding** — look up libraries, never guess
+3. **Follow loaded rules** — conventions from `.claude/rules/` are the source of truth
+4. **One task only** — do not implement beyond your assigned scope
+5. **Ask when blocked** — if something is ambiguous, surface it in your summary rather than assuming

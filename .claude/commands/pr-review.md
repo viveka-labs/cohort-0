@@ -71,12 +71,14 @@ If no input provided, ask the user for the PR number.
 
    Check `.claude/rules/` for any rule files relevant to the changed files. Load and follow all applicable rules. Always load [workflow.md](../rules/workflow.md), [github.md](../rules/github.md).
 
-### Phase 3: Principal Architect Review
+### Phase 3: Spawn Both Review Agents in Parallel
 
-**IMPORTANT: You MUST use the Task tool to spawn the Principal Architect agent. Do NOT execute the review yourself.**
+**IMPORTANT: Spawn both agents simultaneously using the Agent tool. Do NOT execute the reviews yourself and do NOT wait for one to finish before spawning the other.**
 
 ```
-Task(
+// Spawn both at the same time:
+
+Agent(
   subagent_type: "principal-architect",
   description: "Architecture review for PR",
   prompt: """
@@ -95,21 +97,13 @@ Task(
   - Issue requirements: {from GitHub issue if available}
 
   ## Instructions
-  1. Read the pr-review-guide skill at `.claude/skills/pr-review-guide/SKILL.md`
-  2. Focus on: system design, scalability, data model, security boundaries
-  3. Use Challenge & Propose format for issues
-  4. Output review following the skill's format
-  5. Return the review body and any inline comments
+  1. Focus on: system design, scalability, data model, security boundaries
+  2. Output review following the skill's format
+  3. Return the review body and any inline comments
   """
 )
-```
 
-### Phase 4: SDE2 Review
-
-**IMPORTANT: You MUST use the Task tool to spawn the SDE2 agent. Do NOT execute the review yourself.**
-
-```
-Task(
+Agent(
   subagent_type: "sde2",
   description: "Code quality review for PR",
   prompt: """
@@ -128,14 +122,14 @@ Task(
   - Issue requirements: {from GitHub issue if available}
 
   ## Instructions
-  1. Read the pr-review-guide skill at `.claude/skills/pr-review-guide/SKILL.md`
-  2. Focus on: type safety, error handling, code structure, testability
-  3. Use Challenge & Propose format for issues
-  4. Output review following the skill's format
-  5. Return the review body and any inline comments
+  1. Focus on: type safety, error handling, code structure, testability
+  2. Output review following the skill's format
+  3. Return the review body and any inline comments
   """
 )
 ```
+
+Wait for both to return, then proceed to post reviews.
 
 ### Phase 5: Context-Specific Checks
 
@@ -288,10 +282,10 @@ For each issue from the previous review:
 
 **SDE2 Review (Always):**
 
-**IMPORTANT: You MUST use the Task tool to spawn the SDE2 agent. Do NOT execute the review yourself.**
+**IMPORTANT: You MUST use the Agent tool to spawn the SDE2 agent. Do NOT execute the review yourself.**
 
 ```
-Task(
+Agent(
   subagent_type: "sde2",
   description: "Follow-up review for PR",
   prompt: """
@@ -308,11 +302,10 @@ Task(
   {list of changed files}
 
   ## Instructions
-  1. Read the pr-review-follow-up skill at `.claude/skills/pr-review-follow-up/SKILL.md`
-  2. Review ONLY files modified since last review
-  3. Check if previous issues are fixed
-  4. Look for new issues in the changes
-  5. Don't re-review unchanged code
+  1. Review ONLY files modified since last review
+  2. Check if previous issues are fixed
+  3. Look for new issues in the changes
+  4. Don't re-review unchanged code
   """
 )
 ```
@@ -322,7 +315,7 @@ Task(
 Only spawn if: new files added, significant structural changes, or previous Architect review had concerns.
 
 ```
-Task(
+Agent(
   subagent_type: "principal-architect",
   description: "Follow-up architecture review",
   prompt: """
@@ -338,10 +331,9 @@ Task(
   {list of new or structurally changed files}
 
   ## Instructions
-  1. Read the pr-review-follow-up skill at `.claude/skills/pr-review-follow-up/SKILL.md`
-  2. Review new files for architectural fit
-  3. Verify previous architectural concerns addressed
-  4. Check structural changes for system impact
+  1. Review new files for architectural fit
+  2. Verify previous architectural concerns addressed
+  3. Check structural changes for system impact
   """
 )
 ```

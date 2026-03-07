@@ -32,7 +32,7 @@ If no PR number provided, ask the user for it.
                   ▼
 ┌─────────────────────────────────────────┐
 │          Spawn SDE2 Agent               │
-│  • Use Task tool with subagent_type     │
+│  • Use Agent tool with subagent_type     │
 │  • Pass PR context in prompt            │
 │  • Agent executes pr-fix skill          │
 └─────────────────┬───────────────────────┘
@@ -73,10 +73,10 @@ If no PR number provided, ask the user for it.
 
 ### Phase 2: Spawn SDE2 Agent
 
-**IMPORTANT: You MUST use the Task tool to spawn the SDE2 agent. Do NOT execute the skill yourself.**
+**IMPORTANT: You MUST use the Agent tool to spawn the SDE2 agent. Do NOT execute the skill yourself.**
 
 ```
-Task(
+Agent(
   subagent_type: "sde2",
   description: "Fix PR review issues",
   prompt: """
@@ -99,11 +99,10 @@ Task(
   {list of files changed in PR}
 
   ## Instructions
-  1. Read the pr-fix-guide skill at `.claude/skills/pr-fix-guide/SKILL.md`
-  2. Load appropriate rules based on changed files
-  3. Fix blocking issues first, then minor issues
-  4. Work through one fix at a time with summaries
-  5. Verify fixes with typecheck and lint
+  1. Load appropriate rules based on changed files
+  2. Fix blocking issues first, then minor issues
+  3. Work through one fix at a time
+  4. Verify fixes with typecheck and lint
   """
 )
 ```

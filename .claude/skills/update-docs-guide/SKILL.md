@@ -25,44 +25,6 @@ Update documentation based on codebase changes, ensuring docs stay accurate and 
 - To ensure docs stay accurate after refactoring
 - When new features need documentation
 
-## Agent Delegation
-
-Documentation updates are delegated to the **Technical Writer agent** for accuracy and clarity expertise.
-
-### Flow
-
-```
-Coordinator → Spawn Technical Writer "update docs for scope X" → Writer analyzes & proposes → User approves → Writer applies
-```
-
-### How It Works
-
-| Step | Actor            | Action                                             |
-| ---- | ---------------- | -------------------------------------------------- |
-| 1    | Coordinator      | Detects scope (recent changes / path / full audit) |
-| 2    | Coordinator      | Spawns Technical Writer agent with scope           |
-| 3    | Technical Writer | Analyzes changes, discovers affected docs          |
-| 4    | Technical Writer | Compares docs against code, identifies issues      |
-| 5    | Technical Writer | Proposes updates with prioritization               |
-| 6    | User             | Reviews and approves/rejects proposed changes      |
-| 7    | Technical Writer | Applies approved changes                           |
-
-### Technical Writer Task Prompt Template
-
-```
-Update documentation based on codebase changes.
-
-## Scope
-{scope description - recent changes / specific path / full audit}
-
-## Instructions
-1. Read the update-docs-guide skill at `.claude/skills/update-docs-guide/SKILL.md`
-2. Follow the workflow phases (analyze → discover → compare → propose → apply)
-3. Use dynamic discovery, not hardcoded mappings
-4. Prioritize: Critical (incorrect) > High (missing APIs) > Medium (examples) > Low (wording)
-5. Ask for user confirmation before applying changes
-```
-
 ## Workflow
 
 ### Phase 1: Analyze Changes
@@ -147,12 +109,10 @@ For each documentation file that needs changes:
 **Proposed change:** {specific edit}
 ```
 
-### Phase 5: Confirm and Apply
+### Phase 5: Apply Changes
 
-1. **Present all proposed changes** to user
-2. **Ask for confirmation:** "Apply these changes? (all / select / none)"
-3. **Apply approved changes** using Edit tool
-4. **Verify changes** are correct
+1. **Apply all proposed changes** using Edit tool
+2. **Verify changes** are correct after applying
 
 ## Output Format
 

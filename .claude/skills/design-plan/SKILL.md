@@ -22,7 +22,7 @@ Create comprehensive implementation plans for complex tasks, providing architect
 - Complex features with architectural decisions
 - Tasks spanning multiple files/modules
 - New patterns or abstractions needed
-- When user requests `--with-architect` flag
+- When the implement command coordinator spawns you for planning
 
 ## Task-Specific Rules
 
@@ -124,9 +124,9 @@ Before planning, check for any relevant rule files in `.claude/rules/` that appl
    - What could go wrong?
    - What assumptions are being made?
 
-### Phase 6: Present Plan for Approval
+### Phase 6: Return the Plan
 
-Output the plan and **WAIT for user approval** before implementation.
+Output the plan in the format below and return it. The coordinator will present it to the user and handle approval.
 
 ## Output Format
 

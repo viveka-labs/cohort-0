@@ -52,7 +52,7 @@ Parse `$ARGUMENTS` for:
                   ▼
 ┌─────────────────────────────────────────┐
 │          Spawn Tester Agent             │
-│  • Use Task tool with subagent_type     │
+│  • Use Agent tool with subagent_type     │
 │  • Pass context in prompt               │
 └─────────────────┬───────────────────────┘
                   │
@@ -91,10 +91,10 @@ Parse `$ARGUMENTS` for:
 
 ### Phase 2: Spawn Tester Agent
 
-**IMPORTANT: You MUST use the Task tool to spawn the agent. Do NOT execute the skill yourself.**
+**IMPORTANT: You MUST use the Agent tool to spawn the agent. Do NOT execute the skill yourself.**
 
 ```
-Task(
+Agent(
   subagent_type: "tester",
   description: "Implement tests for {target}",
   prompt: """
@@ -106,12 +106,10 @@ Task(
   - Target: {what needs tests}
 
   ## Instructions
-  1. Read the implement-test-guide skill at `.claude/skills/implement-test-guide/SKILL.md`
-  2. Understand the code to be tested
-  3. Design test strategy (fixtures, mocks, assertions)
-  4. Create test plan (TodoWrite)
-  5. Implement tests phase by phase
-  6. Verify all tests passing
+  1. Understand the code to be tested
+  2. Design test strategy (fixtures, mocks, assertions)
+  3. Implement tests
+  4. Verify all tests passing
 
   ## Testing Philosophy
   - Result validation over code coverage
