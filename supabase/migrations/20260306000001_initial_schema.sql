@@ -42,7 +42,7 @@ CREATE TABLE tech_stack_tags (
 -- Core content table
 CREATE TABLE builds (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,  -- nullable for deleted users
+  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL DEFAULT auth.uid(),  -- intentional: ON DELETE SET NULL preserves builds when users are deleted; DEFAULT auth.uid() ensures new inserts via API always have an owner
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   build_type build_type NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE build_tech_stack_tags (
 CREATE TABLE comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   build_id UUID NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,  -- nullable for deleted users
+  user_id UUID REFERENCES profiles(id) ON DELETE SET NULL DEFAULT auth.uid(),  -- intentional: ON DELETE SET NULL preserves comments when users are deleted; DEFAULT auth.uid() ensures new inserts via API always have an owner
   body TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -153,13 +153,13 @@ CREATE POLICY "Public can view profiles"
 CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((select auth.uid()) = id);
 
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   TO authenticated
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  USING ((select auth.uid()) = id)
+  WITH CHECK ((select auth.uid()) = id);
 
 -- ---------------------------------------------------------------------------
 -- ai_tools policies
@@ -172,18 +172,18 @@ CREATE POLICY "Public can view ai_tools"
 CREATE POLICY "Admins can insert ai_tools"
   ON ai_tools FOR INSERT
   TO authenticated
-  WITH CHECK (is_admin());
+  WITH CHECK ((select is_admin()));
 
 CREATE POLICY "Admins can update ai_tools"
   ON ai_tools FOR UPDATE
   TO authenticated
-  USING (is_admin())
-  WITH CHECK (is_admin());
+  USING ((select is_admin()))
+  WITH CHECK ((select is_admin()));
 
 CREATE POLICY "Admins can delete ai_tools"
   ON ai_tools FOR DELETE
   TO authenticated
-  USING (is_admin());
+  USING ((select is_admin()));
 
 -- ---------------------------------------------------------------------------
 -- tech_stack_tags policies
@@ -196,18 +196,18 @@ CREATE POLICY "Public can view tech_stack_tags"
 CREATE POLICY "Admins can insert tech_stack_tags"
   ON tech_stack_tags FOR INSERT
   TO authenticated
-  WITH CHECK (is_admin());
+  WITH CHECK ((select is_admin()));
 
 CREATE POLICY "Admins can update tech_stack_tags"
   ON tech_stack_tags FOR UPDATE
   TO authenticated
-  USING (is_admin())
-  WITH CHECK (is_admin());
+  USING ((select is_admin()))
+  WITH CHECK ((select is_admin()));
 
 CREATE POLICY "Admins can delete tech_stack_tags"
   ON tech_stack_tags FOR DELETE
   TO authenticated
-  USING (is_admin());
+  USING ((select is_admin()));
 
 -- ---------------------------------------------------------------------------
 -- builds policies
@@ -220,18 +220,23 @@ CREATE POLICY "Public can view builds"
 CREATE POLICY "Authenticated users can insert builds"
   ON builds FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK ((select auth.uid()) = user_id);
+
+-- Note: After a user is deleted, builds.user_id becomes NULL (ON DELETE SET NULL).
+-- UPDATE and DELETE policies below cannot match NULL = auth.uid(), so orphaned builds
+-- become immutable via RLS and require admin (service-role) intervention to manage.
+-- This is intentional: builds are preserved for the community after user deletion.
 
 CREATE POLICY "Users can update own builds"
   ON builds FOR UPDATE
   TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can delete own builds"
   ON builds FOR DELETE
   TO authenticated
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 -- ---------------------------------------------------------------------------
 -- build_screenshots policies
@@ -248,7 +253,25 @@ CREATE POLICY "Users can insert screenshots for own builds"
     EXISTS (
       SELECT 1 FROM builds
       WHERE builds.id = build_id
-        AND builds.user_id = auth.uid()
+        AND builds.user_id = (select auth.uid())
+    )
+  );
+
+CREATE POLICY "Users can update screenshots for own builds"
+  ON build_screenshots FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM builds
+      WHERE builds.id = build_id
+        AND builds.user_id = (select auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM builds
+      WHERE builds.id = build_id
+        AND builds.user_id = (select auth.uid())
     )
   );
 
@@ -259,7 +282,7 @@ CREATE POLICY "Users can delete screenshots for own builds"
     EXISTS (
       SELECT 1 FROM builds
       WHERE builds.id = build_id
-        AND builds.user_id = auth.uid()
+        AND builds.user_id = (select auth.uid())
     )
   );
 
@@ -278,7 +301,7 @@ CREATE POLICY "Users can insert ai_tools for own builds"
     EXISTS (
       SELECT 1 FROM builds
       WHERE builds.id = build_id
-        AND builds.user_id = auth.uid()
+        AND builds.user_id = (select auth.uid())
     )
   );
 
@@ -289,7 +312,7 @@ CREATE POLICY "Users can delete ai_tools for own builds"
     EXISTS (
       SELECT 1 FROM builds
       WHERE builds.id = build_id
-        AND builds.user_id = auth.uid()
+        AND builds.user_id = (select auth.uid())
     )
   );
 
@@ -308,7 +331,7 @@ CREATE POLICY "Users can insert tags for own builds"
     EXISTS (
       SELECT 1 FROM builds
       WHERE builds.id = build_id
-        AND builds.user_id = auth.uid()
+        AND builds.user_id = (select auth.uid())
     )
   );
 
@@ -319,7 +342,7 @@ CREATE POLICY "Users can delete tags for own builds"
     EXISTS (
       SELECT 1 FROM builds
       WHERE builds.id = build_id
-        AND builds.user_id = auth.uid()
+        AND builds.user_id = (select auth.uid())
     )
   );
 
@@ -334,18 +357,18 @@ CREATE POLICY "Public can view comments"
 CREATE POLICY "Authenticated users can insert comments"
   ON comments FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can update own comments"
   ON comments FOR UPDATE
   TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can delete own comments"
   ON comments FOR DELETE
   TO authenticated
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 -- ---------------------------------------------------------------------------
 -- upvotes policies
@@ -358,12 +381,12 @@ CREATE POLICY "Public can view upvotes"
 CREATE POLICY "Authenticated users can insert upvotes"
   ON upvotes FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can delete own upvotes"
   ON upvotes FOR DELETE
   TO authenticated
-  USING (auth.uid() = user_id);
+  USING ((select auth.uid()) = user_id);
 
 -- =============================================================================
 -- Phase 3: Triggers
@@ -383,8 +406,8 @@ BEGIN
   INSERT INTO public.profiles (id, display_name, avatar_url)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name', ''),
-    COALESCE(NEW.raw_user_meta_data ->> 'avatar_url', '')
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name'),
+    NEW.raw_user_meta_data ->> 'avatar_url'
   );
   RETURN NEW;
 END;
@@ -402,9 +425,11 @@ CREATE TRIGGER on_auth_user_created
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
 AS $$
 BEGIN
-  NEW.updated_at = now();
+  NEW.updated_at = pg_catalog.now();
   RETURN NEW;
 END;
 $$;

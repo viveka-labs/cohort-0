@@ -12,11 +12,14 @@ CREATE POLICY "Public read access for build screenshots"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'build-screenshots');
 
--- Authenticated users can upload
+-- Authenticated users can upload to their own folder only ({user_id}/{build_id}/filename)
 CREATE POLICY "Authenticated users can upload build screenshots"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (bucket_id = 'build-screenshots');
+  WITH CHECK (
+    bucket_id = 'build-screenshots'
+    AND (storage.foldername(name))[1] = (select auth.uid()::text)
+  );
 
 -- Users can update their own files
 -- Note: owner_id is stored as text, so we cast auth.uid() to text for comparison
