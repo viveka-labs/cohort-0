@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { clientEnv } from "@/lib/env.client";
+import type { Database } from "./database.types";
 
 /**
  * Creates a Supabase client for use in the browser (Client Components).
@@ -9,10 +10,10 @@ import { clientEnv } from "@/lib/env.client";
  *
  * Usage in a Client Component:
  *   const supabase = createClient()
- *   const { data } = await supabase.from("posts").select()
+ *   const { data } = await supabase.from("builds").select()
  */
 export function createClient() {
-  return createBrowserClient(
+  return createBrowserClient<Database>(
     clientEnv.NEXT_PUBLIC_SUPABASE_URL,
     clientEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   );
