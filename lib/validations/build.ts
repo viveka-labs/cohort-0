@@ -8,24 +8,24 @@ import { Constants } from "@/lib/supabase/database.types";
 
 const buildTypeValues = Constants.public.Enums.build_type;
 
-const optionalUrl = z.string().url("Please enter a valid URL").optional().or(z.literal(""));
+const optionalUrl = z.string().url({ error: "Please enter a valid URL" }).optional().or(z.literal(""));
 
 export const buildFormSchema = z.object({
-  title: z.string().min(1, "Title is required").max(120, "Title is too long"),
+  title: z.string().min(1, { error: "Title is required" }).max(120, { error: "Title is too long" }),
   description: z
     .string()
-    .min(1, "Description is required")
-    .max(2000, "Description is too long"),
+    .min(1, { error: "Description is required" })
+    .max(2000, { error: "Description is too long" }),
   build_type: z.enum(buildTypeValues, {
-    message: "Please select a build type",
+    error: "Please select a build type",
   }),
   live_url: optionalUrl,
   repo_url: optionalUrl,
   ai_tool_ids: z
-    .array(z.string().uuid("Each AI tool must be a valid ID"))
-    .min(1, "Select at least one AI tool"),
+    .array(z.string().uuid({ error: "Each AI tool must be a valid ID" }))
+    .min(1, { error: "Select at least one AI tool" }),
   tech_stack_tag_ids: z
-    .array(z.string().uuid("Each tag must be a valid ID")),
+    .array(z.string().uuid({ error: "Each tag must be a valid ID" })),
 });
 
 export type BuildFormData = z.infer<typeof buildFormSchema>;

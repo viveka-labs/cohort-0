@@ -1,5 +1,25 @@
+import "server-only";
+
 import { createClient } from "@/lib/supabase/server";
 import type { BuildInsert, BuildUpdate, BuildWithDetails } from "@/types";
+
+/**
+ * Shared select string for fetching builds with all related data.
+ * Uses `upvotes:upvotes(count)` to let PostgREST compute the count
+ * server-side instead of fetching every upvote row.
+ */
+const BUILD_WITH_DETAILS_SELECT = `
+  *,
+  profile:profiles(*),
+  screenshots:build_screenshots(*),
+  ai_tools:build_ai_tools(
+    ...ai_tools(*)
+  ),
+  tech_stack_tags:build_tech_stack_tags(
+    ...tech_stack_tags(*)
+  ),
+  upvotes:upvotes(count)
+` as const;
 
 /**
  * Fetches all builds for the feed, including the author profile,
@@ -13,20 +33,7 @@ export async function getBuilds() {
 
   const { data, error } = await supabase
     .from("builds")
-    .select(
-      `
-      *,
-      profile:profiles(*),
-      screenshots:build_screenshots(*),
-      ai_tools:build_ai_tools(
-        ...ai_tools(*)
-      ),
-      tech_stack_tags:build_tech_stack_tags(
-        ...tech_stack_tags(*)
-      ),
-      upvotes(build_id)
-    `
-    )
+    .select(BUILD_WITH_DETAILS_SELECT)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -35,12 +42,8 @@ export async function getBuilds() {
 
   const builds: BuildWithDetails[] = (data ?? []).map((build) => ({
     ...build,
-    profile: build.profile,
-    screenshots: build.screenshots,
-    ai_tools: build.ai_tools,
-    tech_stack_tags: build.tech_stack_tags,
-    upvote_count: build.upvotes.length,
-  }));
+    upvote_count: build.upvotes[0]?.count ?? 0,
+  }) as BuildWithDetails);
 
   return { data: builds, error: null };
 }
@@ -54,20 +57,7 @@ export async function getBuildById(id: string) {
 
   const { data, error } = await supabase
     .from("builds")
-    .select(
-      `
-      *,
-      profile:profiles(*),
-      screenshots:build_screenshots(*),
-      ai_tools:build_ai_tools(
-        ...ai_tools(*)
-      ),
-      tech_stack_tags:build_tech_stack_tags(
-        ...tech_stack_tags(*)
-      ),
-      upvotes(build_id)
-    `
-    )
+    .select(BUILD_WITH_DETAILS_SELECT)
     .eq("id", id)
     .single();
 
@@ -77,12 +67,8 @@ export async function getBuildById(id: string) {
 
   const build: BuildWithDetails = {
     ...data,
-    profile: data.profile,
-    screenshots: data.screenshots,
-    ai_tools: data.ai_tools,
-    tech_stack_tags: data.tech_stack_tags,
-    upvote_count: data.upvotes.length,
-  };
+    upvote_count: data.upvotes[0]?.count ?? 0,
+  } as BuildWithDetails;
 
   return { data: build, error: null };
 }
@@ -90,13 +76,21 @@ export async function getBuildById(id: string) {
 /**
  * Creates a new build. Returns the inserted row.
  *
- * Callers must set `user_id` on `data` from the authenticated session
- * (e.g. via `requireUser()`). RLS enforces ownership.
+ * Accepts build data without `user_id` and a separate `userId` param.
+ * This ensures callers always provide the authenticated user's ID
+ * explicitly. RLS enforces ownership.
  */
-export async function createBuild(data: BuildInsert) {
+export async function createBuild(
+  data: Omit<BuildInsert, "user_id">,
+  userId: string,
+) {
   const supabase = await createClient();
 
-  return supabase.from("builds").insert(data).select().single();
+  return supabase
+    .from("builds")
+    .insert({ ...data, user_id: userId })
+    .select()
+    .single();
 }
 
 /**
