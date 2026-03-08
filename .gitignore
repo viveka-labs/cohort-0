@@ -57,3 +57,7 @@ Thumbs.db
 
 # docs
 reports/
+
+# docs-mcp (databases shared via Docker image, not git)
+docs-mcp/data/
+docs-mcp/documents.db

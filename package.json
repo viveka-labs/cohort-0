@@ -8,7 +8,16 @@
     "start": "next start",
     "lint": "eslint",
     "gen-types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "gen-types:prod": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > lib/supabase/database.types.ts"
+    "gen-types:prod": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > lib/supabase/database.types.ts",
+    "docs:serve": "npx @arabold/docs-mcp-server@latest --store-path ./docs-mcp/data",
+    "docs:export": "cp ./docs-mcp/data/documents.db ./docs-mcp/documents.db && echo 'Exported docs-mcp database to docs-mcp/documents.db'",
+    "docs:build": "docker build -t ghcr.io/viveka-labs/bob-the-builder-docs-mcp:latest ./docs-mcp",
+    "docs:login": "gh auth token | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin",
+    "docs:push": "docker push ghcr.io/viveka-labs/bob-the-builder-docs-mcp:latest",
+    "docs:publish": "yarn docs:export && yarn docs:build && yarn docs:push",
+    "docs:start": "docker run -d --name bob-the-builder-docs-mcp -p 6280:6280 ghcr.io/viveka-labs/bob-the-builder-docs-mcp:latest --protocol http --host 0.0.0.0 --port 6280 && echo 'Docs MCP server running at http://localhost:6280'",
+    "docs:stop": "docker stop bob-the-builder-docs-mcp && docker rm bob-the-builder-docs-mcp",
+    "docs:pull": "docker pull ghcr.io/viveka-labs/bob-the-builder-docs-mcp:latest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
