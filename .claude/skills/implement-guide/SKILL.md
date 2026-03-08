@@ -66,8 +66,8 @@ This is mandatory — do not guess how a library works. Verify correct usage, co
 Run after completing:
 
 ```bash
-yarn typecheck    # TypeScript
-yarn lint         # ESLint
+npm run typecheck    # TypeScript
+npm run lint         # ESLint
 ```
 
 Fix all errors before returning your summary.
@@ -80,18 +80,22 @@ Return this structure:
 ### Task Complete: {task name}
 
 #### Changes Made
-| File | Change |
-|------|--------|
+
+| File               | Change        |
+| ------------------ | ------------- |
 | `path/to/file.tsx` | {description} |
 
 #### Key Code
+
 {Most important snippet with file:line reference}
 
 #### Verification
+
 - TypeScript: {No errors | N errors fixed}
 - Lint: {No warnings | N warnings fixed}
 
 #### Notes
+
 {Decisions made, patterns established, or anything the next task should know}
 ```
 

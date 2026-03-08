@@ -4,8 +4,8 @@ Comprehensive code review using dual-agent analysis. Auto-detects context based 
 
 ## Agents Used
 
-| Agent                                                   | Skill                                     | Perspective                  |
-| ------------------------------------------------------- | ----------------------------------------- | ---------------------------- |
+| Agent                                                   | Skill                                                 | Perspective                  |
+| ------------------------------------------------------- | ----------------------------------------------------- | ---------------------------- |
 | [Principal Architect](../agents/principal-architect.md) | [pr-review-guide](../skills/pr-review-guide/SKILL.md) | Architecture & system design |
 | [SDE2](../agents/sde2.md)                               | [pr-review-guide](../skills/pr-review-guide/SKILL.md) | Code quality & correctness   |
 
@@ -164,6 +164,7 @@ Before posting, deduplicate inline comments across both agent results to prevent
 **Steps:**
 
 1. Collect all inline comments from both agents into a flat list, tagged by source:
+
    ```
    architect_comments = [{path, line, body}, ...]
    sde2_comments      = [{path, line, body}, ...]
@@ -397,7 +398,7 @@ Deduplicate inline comments across both agents (same as Phase 4 in full review m
 1. **Post Principal Architect follow-up review**
 2. **Post SDE2 follow-up review**
 
-### Phase F5: Post Follow-up Review
+### Phase F6: Post Follow-up Review
 
 ```bash
 gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews \
