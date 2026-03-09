@@ -40,7 +40,7 @@ Use this when working on database schema, migrations, or RLS policies. Requires 
 npm install
 
 # 2. Start Docker Desktop (open the app), then start local Supabase
-npx supabase start
+npm run db:start
 # This downloads Supabase images the first time — takes a few minutes
 # When done, it prints a URL and publishable key — you'll need these next
 
@@ -51,10 +51,10 @@ cp .env.local.example .env.local
 #   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
 
 # 4. Apply migrations and seed data
-npx supabase db reset
+npm run db:reset
 
 # 5. Generate TypeScript types
-npm run gen-types
+npm run gen-types:local
 
 # 6. Start the development server
 npm run dev
@@ -69,12 +69,18 @@ npx supabase migration new your_migration_name
 # 2. Write your SQL in the new file (supabase/migrations/...)
 
 # 3. Test it locally
-npx supabase db reset
+npm run db:reset
 
 # 4. Regenerate TypeScript types
-npm run gen-types
+npm run gen-types:local
 
 # 5. Commit the migration file and updated types, then open a PR
+```
+
+When you're done, stop local Supabase to free up Docker resources:
+
+```bash
+npm run db:stop
 ```
 
 > **Important:** Never run `supabase db push` manually against the production project.

@@ -1,7 +1,16 @@
-# Nexus
+# Bob The Builder
 
-AI-Native Designer Cohort -- a 4-week program turning product designers into design engineers using AI.
+AI is dissolving job titles. A designer fixes a production bug. A PM ships a full-stack feature. A marketer builds an internal tool. A tester deploys an automation framework. The question isn't "what's your role?" anymore — it's "what did you ship?"
 
+This is the **builder economy**. AI is the great equalizer — it gives everyone the ability to build, regardless of their background, title, or years of experience. The people who thrive aren't the ones with the fanciest credentials. They're the ones who ship.
+
+Bob the Builder is the home for these people. A platform where anyone who shipped something with AI can show their work, share how they did it, and inspire others to ship too. Designers, PMs, engineers, testers, marketers, founders, students — everyone's a builder now.
+
+Every post answers one question: **"What did you ship, and how did AI help you ship it?"**
+
+_Can we ship it? Yes we can._
+
+AI-Native Designer Cohort Product -- a 4-week program turning product designers into design engineers using AI.
 Built with Next.js, Tailwind CSS, shadcn/ui, and Supabase.
 
 ## Prerequisites
@@ -30,23 +39,26 @@ Use this when working on database schema, migrations, or RLS policies.
 
 ```bash
 npm install
-npx supabase start        # First run downloads images (~5 min)
+npm run db:start          # First run downloads images (~5 min)
 cp .env.local.example .env.local
 # Paste the URL and publishable key from `supabase start` output into .env.local
-npx supabase db reset      # Apply migrations and seed data
-npm run gen-types          # Generate TypeScript types
+npm run db:reset             # Apply migrations + seed data locally
+npm run gen-types:local      # Generate TypeScript types
 npm run dev
+# When done: npm run db:stop
 ```
 
 ## Database Scripts
 
-| Script       | What it does                                     |
-| ------------ | ------------------------------------------------ |
-| `db:push`    | Push migrations to the linked remote project     |
-| `db:migrate` | Create a new migration file                      |
-| `db:types`   | Generate TypeScript types from the remote project|
-| `db:status`  | Show local Supabase status                       |
-| `gen-types`  | Generate TypeScript types from local Supabase    |
+| Script            | Target | What it does                                                      |
+| ----------------- | ------ | ----------------------------------------------------------------- |
+| `db:start`        | Local  | Start local Supabase (Docker containers)                          |
+| `db:stop`         | Local  | Stop local Supabase and remove containers                         |
+| `db:reset`        | Local  | Wipe and re-apply all migrations + seed data                      |
+| `db:push`         | Prod   | Apply pending migrations to prod (team lead only)                 |
+| `db:status`       | Local  | Show local Supabase status                                        |
+| `gen-types:local` | Local  | Generate TypeScript types from local Supabase                     |
+| `gen-types:prod`  | Prod   | Generate TypeScript types from prod (needs `SUPABASE_PROJECT_ID`) |
 
 ## Contributing
 
