@@ -1,9 +1,18 @@
+import crypto from "node:crypto";
+
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { uploadRequestSchema } from "@/lib/validations/upload";
+
+const CONTENT_TYPE_TO_EXTENSION: Record<string, string> = {
+  "image/png": ".png",
+  "image/jpeg": ".jpg",
+  "image/gif": ".gif",
+  "image/webp": ".webp",
+};
 
 const BUCKET_NAME = "build-screenshots";
 
@@ -14,7 +23,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const result = uploadRequestSchema.safeParse(body);
 
   if (!result.success) {
@@ -24,8 +39,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const { fileName, contentType, buildId } = result.data;
-  const path = `${user.id}/${buildId}/${fileName}`;
+  const { contentType, buildId } = result.data;
+  const extension = CONTENT_TYPE_TO_EXTENSION[contentType];
+  const generatedFileName = `${crypto.randomUUID()}${extension}`;
+  const path = `${user.id}/${buildId}/${generatedFileName}`;
 
   const supabase = await createClient();
   const { data, error } = await supabase.storage
@@ -33,8 +50,9 @@ export async function POST(request: Request) {
     .createSignedUploadUrl(path, { upsert: true });
 
   if (error) {
+    console.error("Supabase upload URL error:", error.message);
     return NextResponse.json(
-      { error: `Failed to create signed upload URL: ${error.message}` },
+      { error: "Failed to generate upload URL" },
       { status: 500 },
     );
   }
