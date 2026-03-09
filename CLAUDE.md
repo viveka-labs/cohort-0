@@ -35,7 +35,7 @@ components/
 lib/
   constants/       # App-wide constants (routes, mime types)
   queries/         # Server-only Supabase queries (ai-tools, builds, etc.)
-  supabase/        # Supabase client setup (server.ts, client.ts, middleware.ts)
+  supabase/        # Supabase client setup (server.ts, client.ts, proxy.ts)
   validations/     # Zod schemas for form/API validation
   auth.ts          # Auth helper utilities
   env.client.ts    # Zod-validated public env vars (NEXT_PUBLIC_*)
@@ -85,7 +85,7 @@ All database queries live in `lib/queries/` and import `"server-only"`. They use
 
 Local workflow: `db:start` → `db:reset` → `gen-types:local` → `npm run dev` → `db:stop` when done.
 
-> `db:push` targets production — only the team lead should run this after a PR is merged.
+> `db:push` targets production -- only the team lead should run this after a PR is merged.
 
 ## Database
 

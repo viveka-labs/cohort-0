@@ -41,7 +41,7 @@ Use this when working on database schema, migrations, or RLS policies.
 npm install
 npm run db:start          # First run downloads images (~5 min)
 cp .env.local.example .env.local
-# Paste the URL and publishable key from `supabase start` output into .env.local
+# Paste the URL and publishable key from `npm run db:start` output into .env.local
 npm run db:reset             # Apply migrations + seed data locally
 npm run gen-types:local      # Generate TypeScript types
 npm run dev
