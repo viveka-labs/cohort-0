@@ -6,9 +6,10 @@ import { MimeType } from "@/lib/constants/mime-types";
 // Upload request — used when requesting a signed URL for file upload
 // ---------------------------------------------------------------------------
 
+const allowedMimeTypes = Object.values(MimeType) as [MimeType, ...MimeType[]];
+
 export const uploadRequestSchema = z.object({
-  fileName: z.string().min(1, { error: "File name is required" }),
-  contentType: z.enum(MimeType, {
+  contentType: z.enum(allowedMimeTypes, {
     error: "File must be an image (png, jpeg, gif, or webp)",
   }),
   buildId: z.string().uuid({ error: "Build ID must be a valid UUID" }),
