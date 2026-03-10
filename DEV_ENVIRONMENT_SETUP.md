@@ -4,7 +4,7 @@ Manual steps required to complete the dev (and prod) environment setup. These ar
 
 ## Prerequisites
 
-- Access to the GitHub OAuth App settings
+- Access to GitHub (to create OAuth Apps)
 - Access to the Google Cloud Console OAuth credentials
 - Admin access to both Supabase projects
 - Admin access to the Vercel project (`bob-the-builder` in `innovativegamers-projects`)
@@ -13,6 +13,7 @@ Manual steps required to complete the dev (and prod) environment setup. These ar
 
 | Environment | Supabase Project Ref   | Vercel URL                                                             |
 | ----------- | ---------------------- | ---------------------------------------------------------------------- |
+| Local       | Docker                 | `http://localhost:3000`                                                |
 | Dev         | `fpbglwvzpmqmtdtrhuhc` | `https://bob-the-builder-git-dev-innovativegamers-projects.vercel.app` |
 | Prod        | `nktwfzcadffzfthslckx` | `https://bob-the-builder-zeta.vercel.app`                              |
 
@@ -23,22 +24,48 @@ Manual steps required to complete the dev (and prod) environment setup. These ar
 
 ---
 
-## Step 1: Add Callback URLs to GitHub OAuth App
+## GitHub OAuth — Separate App Per Environment
 
-1. Go to GitHub > Settings > Developer settings > OAuth Apps > select your app
-2. Add **both** Authorization callback URLs:
-   ```
-   https://fpbglwvzpmqmtdtrhuhc.supabase.co/auth/v1/callback
-   https://nktwfzcadffzfthslckx.supabase.co/auth/v1/callback
-   ```
-3. Save changes
+GitHub OAuth Apps only support a **single callback URL**, so each environment needs its own OAuth App. The existing app (used for local dev) stays unchanged.
 
-> The existing local callback (`http://127.0.0.1:54321/auth/v1/callback`) should remain.
+| Environment | OAuth App Name            | Callback URL                                                |
+| ----------- | ------------------------- | ----------------------------------------------------------- |
+| Local       | existing app (keep as-is) | `http://127.0.0.1:54321/auth/v1/callback`                   |
+| Dev         | `Bob The Builder (Dev)`   | `https://fpbglwvzpmqmtdtrhuhc.supabase.co/auth/v1/callback` |
+| Prod        | `Bob The Builder (Prod)`  | `https://nktwfzcadffzfthslckx.supabase.co/auth/v1/callback` |
 
-## Step 2: Add Redirect URIs and Origins to Google OAuth App
+---
+
+## Step 1: Create GitHub OAuth App for Dev
+
+1. Go to [github.com/settings/developers](https://github.com/settings/developers) → **New OAuth App**
+2. Fill in:
+   - **Application name:** `Bob The Builder (Dev)`
+   - **Homepage URL:** `https://bob-the-builder-git-dev-innovativegamers-projects.vercel.app`
+   - **Authorization callback URL:** `https://fpbglwvzpmqmtdtrhuhc.supabase.co/auth/v1/callback`
+3. Click **Register application**
+4. Generate a client secret and note down:
+   - `Client ID`
+   - `Client Secret`
+
+## Step 2: Create GitHub OAuth App for Prod
+
+1. Go to [github.com/settings/developers](https://github.com/settings/developers) → **New OAuth App**
+2. Fill in:
+   - **Application name:** `Bob The Builder (Prod)`
+   - **Homepage URL:** `https://bob-the-builder-zeta.vercel.app`
+   - **Authorization callback URL:** `https://nktwfzcadffzfthslckx.supabase.co/auth/v1/callback`
+3. Click **Register application**
+4. Generate a client secret and note down:
+   - `Client ID`
+   - `Client Secret`
+
+## Step 3: Update Google OAuth App
+
+Google supports multiple redirect URIs and origins in a single app, so no new app needed.
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) > APIs & Services > Credentials
-2. Select your OAuth 2.0 Client ID
+2. Select your existing OAuth 2.0 Client ID
 3. Under **Authorized JavaScript origins**, add:
    ```
    https://bob-the-builder-git-dev-innovativegamers-projects.vercel.app
@@ -51,14 +78,15 @@ Manual steps required to complete the dev (and prod) environment setup. These ar
    ```
 5. Save changes
 
-## Step 3: Enable OAuth Providers in Dev Supabase Dashboard
+## Step 4: Enable OAuth Providers in Dev Supabase Dashboard
 
 1. Go to https://supabase.com/dashboard/project/fpbglwvzpmqmtdtrhuhc
 2. Navigate to **Authentication > Providers**
 3. Enable **GitHub**:
-   - Set Client ID and Client Secret (shared OAuth app credentials from `.env`)
+   - Client ID: from Step 1
+   - Client Secret: from Step 1
 4. Enable **Google**:
-   - Set Client ID and Client Secret (shared OAuth app credentials from `.env`)
+   - Client ID + Secret: from your existing Google OAuth app
 5. Navigate to **Authentication > URL Configuration**
 6. Set **Site URL** to:
    ```
@@ -70,14 +98,15 @@ Manual steps required to complete the dev (and prod) environment setup. These ar
    http://localhost:3000/**
    ```
 
-## Step 4: Enable OAuth Providers in Prod Supabase Dashboard
+## Step 5: Enable OAuth Providers in Prod Supabase Dashboard
 
 1. Go to https://supabase.com/dashboard/project/nktwfzcadffzfthslckx
 2. Navigate to **Authentication > Providers**
 3. Enable **GitHub**:
-   - Set Client ID and Client Secret (shared OAuth app credentials from `.env`)
+   - Client ID: from Step 2
+   - Client Secret: from Step 2
 4. Enable **Google**:
-   - Set Client ID and Client Secret (shared OAuth app credentials from `.env`)
+   - Client ID + Secret: from your existing Google OAuth app
 5. Navigate to **Authentication > URL Configuration**
 6. Set **Site URL** to:
    ```
