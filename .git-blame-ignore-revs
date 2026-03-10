@@ -1,0 +1,5 @@
+# To activate locally, run:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# One-time Prettier formatting pass
+5792f5a299de3c84d292255cd1006915f75f49b3
