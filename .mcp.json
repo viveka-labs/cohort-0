@@ -7,6 +7,13 @@
     "bob-the-builder-docs-mcp": {
       "type": "sse",
       "url": "http://localhost:6280/sse"
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--executable-path=/Applications/Brave Browser.app/Contents/MacOS/Brave Browser"
+      ]
     }
   }
 }

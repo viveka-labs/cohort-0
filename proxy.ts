@@ -2,18 +2,47 @@
  * Root proxy file for Next.js 16.
  *
  * Think of this like a security guard at the front door of your app.
- * Before any page loads, this file runs and refreshes the user's
- * login session so they stay signed in as they navigate around.
+ * Before any page loads, this file runs two checks:
+ *
+ *   1. Refreshes the user's login session so they stay signed in
+ *   2. Redirects unauthenticated users away from protected pages
  *
  * In Next.js 16, this file replaces the old "middleware.ts" convention.
  * The function must be named "proxy" (not "middleware").
  */
 
+import { NextResponse, type NextRequest } from "next/server";
+
+import { Routes } from "@/lib/constants/routes";
 import { updateSession } from "@/lib/supabase/proxy";
-import type { NextRequest } from "next/server";
+
+/**
+ * Paths that unauthenticated users can access.
+ *
+ * Everything else (home, builds, profile, etc.) requires a session.
+ * We check with `startsWith` so sub-paths like /auth/callback are
+ * also covered.
+ *
+ * API routes are included here because they handle their own auth
+ * (returning 401 JSON responses instead of HTML redirects).
+ */
+const PUBLIC_PATHS = [Routes.LOGIN, Routes.AUTH_CALLBACK, "/api"] as const;
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+}
 
 export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+  const { response, isAuthenticated } = await updateSession(request);
+
+  // If the user is not logged in and is trying to access a protected
+  // route, redirect them to the login page.
+  if (!isAuthenticated && !isPublicPath(request.nextUrl.pathname)) {
+    const loginUrl = new URL(Routes.LOGIN, request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return response;
 }
 
 /**

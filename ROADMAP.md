@@ -12,11 +12,9 @@ A working desktop-only app with the minimum functionality needed for the platfor
 
 ### Authentication
 
-- Sign up with email and password
-- Log in / log out
-- GitHub OAuth sign-in
-- Google OAuth sign-in
-- Password reset via email
+- Sign in with GitHub OAuth (primary)
+- Sign in with Google OAuth
+- Sign out
 
 ### Build Submission
 
@@ -63,7 +61,7 @@ Isolated to a single component or page. Fixable by reading the component and adj
 2. **Build title truncation is broken** — Long titles overflow instead of truncating with ellipsis on the feed page
 3. **Navigation logo is not aligned** — Logo and nav links are vertically misaligned
 4. **Screenshot aspect ratios are wrong** — Build screenshots on the detail page stretch instead of maintaining aspect ratio
-5. **Form input focus states are missing** — Text inputs on login/signup have no visible focus ring
+5. **Form input focus states are missing** — Text inputs on Build submission and profile forms have no visible focus ring
 
 ### Medium — Component Logic
 

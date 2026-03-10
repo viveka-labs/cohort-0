@@ -6,12 +6,17 @@ import { clientEnv } from "@/lib/env.client";
  * Refreshes the user's auth session on every request and keeps
  * cookies in sync between the browser and server.
  *
+ * Returns both the response (with refreshed cookies) and whether
+ * the user is authenticated — so the proxy can gate routes without
+ * making a second auth call.
+ *
  * Call this from your root proxy.ts file:
  *
  *   import { updateSession } from "@/lib/supabase/proxy"
  *
  *   export async function proxy(request: NextRequest) {
- *     return await updateSession(request)
+ *     const { response } = await updateSession(request)
+ *     return response
  *   }
  */
 export async function updateSession(request: NextRequest) {
@@ -61,7 +66,10 @@ export async function updateSession(request: NextRequest) {
   // or via a server call with symmetric keys (HS256, the Supabase default).
   // We use getClaims() here instead of getUser() so the proxy automatically
   // becomes zero-cost if the project switches to asymmetric keys later.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return supabaseResponse;
+  return {
+    response: supabaseResponse,
+    isAuthenticated: data !== null,
+  };
 }

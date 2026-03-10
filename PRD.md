@@ -93,11 +93,9 @@ Everything needed for builders to share work and for visitors to discover it.
 
 ### Authentication
 
-- Sign up with email and password
-- Log in / log out
-- GitHub OAuth (primary — this is a builder community)
-- Google OAuth
-- Password reset via email
+- Sign in with GitHub OAuth (primary — this is a builder community)
+- Sign in with Google OAuth
+- Sign out
 
 ### Submitting a Build
 
