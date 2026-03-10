@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import { Routes } from "@/lib/constants/routes";
 
@@ -19,14 +20,7 @@ export default async function LoginPage({
         </p>
       </div>
 
-      {error && (
-        <div
-          role="alert"
-          className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
-          {error}
-        </div>
-      )}
+      {error && <AuthErrorAlert message={error} />}
 
       <OAuthButtons />
 

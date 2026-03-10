@@ -1,6 +1,6 @@
 "use client";
 
-import { signInWithGithub, signInWithGoogle } from "@/app/(auth)/login/actions";
+import { signInWithGithub, signInWithGoogle } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 
 function GoogleIcon() {
