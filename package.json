@@ -17,6 +17,7 @@
     "db:push": "supabase db push",
     "db:status": "supabase status",
     "gen-types:local": "supabase gen types typescript --local > lib/supabase/database.types.ts",
+    "gen-types:dev": "supabase gen types typescript --project-id fpbglwvzpmqmtdtrhuhc > lib/supabase/database.types.ts",
     "gen-types:prod": "supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > lib/supabase/database.types.ts",
     "docs:serve": "npx @arabold/docs-mcp-server@latest --store-path ./docs-mcp/data",
     "docs:export": "cp ./docs-mcp/data/documents.db ./docs-mcp/documents.db && echo 'Exported docs-mcp database to docs-mcp/documents.db'",
