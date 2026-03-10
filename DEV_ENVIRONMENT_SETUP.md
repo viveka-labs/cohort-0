@@ -70,7 +70,10 @@ Google supports multiple redirect URIs and origins in a single app, so no new ap
    ```
    https://bob-the-builder-git-dev-innovativegamers-projects.vercel.app
    https://bob-the-builder-zeta.vercel.app
+   http://localhost:3000
+   http://127.0.0.1:3000
    ```
+   (keep `localhost` and `127.0.0.1` origins if they already exist, or add them for local dev)
 4. Under **Authorized redirect URIs**, add:
    ```
    https://fpbglwvzpmqmtdtrhuhc.supabase.co/auth/v1/callback
@@ -115,6 +118,7 @@ Google supports multiple redirect URIs and origins in a single app, so no new ap
 7. Under **Redirect URLs**, add:
    ```
    https://bob-the-builder-zeta.vercel.app/**
+   # Note: localhost is intentionally NOT added — production should never redirect to localhost.
    ```
 
 ---
