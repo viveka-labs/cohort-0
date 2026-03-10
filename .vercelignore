@@ -1,0 +1,9 @@
+node_modules
+.next
+coverage
+.supabase
+supabase/.temp
+docs-mcp
+reports
+*.pem
+*.tsbuildinfo
