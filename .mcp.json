@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "supabase-viveka": {
+    "supabase-btb": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp"
     },
