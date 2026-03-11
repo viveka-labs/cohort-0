@@ -107,7 +107,7 @@ Collect:
    - Exists locally → ask user: checkout existing or create new?
    - Exists on remote only → fetch and checkout
 
-4. Ask user for base branch (default: `main`)
+4. Ask user for base branch (default: `dev`)
 
 5. Create and checkout:
 
