@@ -6,10 +6,14 @@ import { getTechStackTags } from '@/lib/queries/tech-stack-tags';
 export default async function NewBuildPage() {
   await requireUser();
 
-  const [{ data: aiTools }, { data: techStackTags }] = await Promise.all([
-    getAiTools(),
-    getTechStackTags(),
-  ]);
+  const [
+    { data: aiTools, error: aiToolsError },
+    { data: techStackTags, error: techStackTagsError },
+  ] = await Promise.all([getAiTools(), getTechStackTags()]);
+
+  if (aiToolsError || techStackTagsError) {
+    throw new Error('Failed to load form data');
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">

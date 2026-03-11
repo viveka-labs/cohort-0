@@ -10,9 +10,8 @@ const buildTypeValues = Constants.public.Enums.build_type;
 
 const optionalUrl = z
   .string()
-  .url({ error: 'Please enter a valid URL' })
-  .optional()
-  .or(z.literal(''));
+  .transform((v) => (v === '' ? undefined : v))
+  .pipe(z.string().url({ error: 'Please enter a valid URL' }).optional());
 
 export const buildFormSchema = z.object({
   title: z
@@ -36,4 +35,8 @@ export const buildFormSchema = z.object({
   ),
 });
 
+/** What the form fields hold before Zod transforms run (e.g. empty strings). */
+export type BuildFormInput = z.input<typeof buildFormSchema>;
+
+/** What `safeParse` returns after transforms (e.g. empty strings become undefined). */
 export type BuildFormData = z.infer<typeof buildFormSchema>;

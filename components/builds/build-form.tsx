@@ -45,7 +45,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { type BuildFormData, buildFormSchema } from '@/lib/validations/build';
+import {
+  type BuildFormData,
+  type BuildFormInput,
+  buildFormSchema,
+} from '@/lib/validations/build';
 import type { AiTool, TechStackTag } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -76,7 +80,7 @@ type BuildFormProps = {
 export function BuildForm({ aiTools, techStackTags }: BuildFormProps) {
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<BuildFormData>({
+  const form = useForm<BuildFormInput, unknown, BuildFormData>({
     resolver: zodResolver(buildFormSchema),
     defaultValues: {
       title: '',

@@ -3,27 +3,26 @@
 import { redirect } from 'next/navigation';
 
 import { requireUser } from '@/lib/auth';
-import { Routes } from '@/lib/constants/routes';
-import { createBuild } from '@/lib/queries/builds';
-import { createClient } from '@/lib/supabase/server';
+import { buildRoute } from '@/lib/constants/routes';
+import { createBuildWithRelations } from '@/lib/queries/builds';
 import { type BuildFormData, buildFormSchema } from '@/lib/validations/build';
 
 /**
  * Server action that creates a new build with its associated AI tools
- * and tech stack tags.
+ * and tech stack tags in a single atomic database transaction.
  *
  * Steps:
  * 1. Authenticate the user (redirects to login if not signed in)
  * 2. Validate form data against the Zod schema
- * 3. Insert the build row
- * 4. Insert junction rows for AI tools and tech stack tags
- * 5. Redirect to the new build's detail page
+ * 3. Call the `create_build_with_relations` RPC function, which inserts the
+ *    build row and all junction rows in one transaction
+ * 4. Redirect to the new build's detail page
  *
  * Returns `{ error: string }` on failure so the client can display it.
- * On success, redirects — so the caller never receives a return value.
+ * On success, redirects -- so the caller never receives a return value.
  */
 export async function createBuildAction(data: BuildFormData) {
-  const user = await requireUser();
+  await requireUser();
 
   const result = buildFormSchema.safeParse(data);
 
@@ -33,56 +32,28 @@ export async function createBuildAction(data: BuildFormData) {
 
   const { ai_tool_ids, tech_stack_tag_ids, ...buildData } = result.data;
 
-  let buildId: string;
+  let buildId: string | null = null;
 
   try {
-    const { data: build, error: buildError } = await createBuild(
-      buildData,
-      user.id
-    );
+    const { data: id, error } = await createBuildWithRelations({
+      title: buildData.title,
+      description: buildData.description,
+      buildType: buildData.build_type,
+      liveUrl: buildData.live_url,
+      repoUrl: buildData.repo_url,
+      aiToolIds: ai_tool_ids,
+      techStackTagIds: tech_stack_tag_ids,
+    });
 
-    if (buildError || !build) {
-      return { error: buildError?.message ?? 'Failed to create build' };
+    if (error || !id) {
+      return { error: error?.message ?? 'Failed to create build' };
     }
 
-    buildId = build.id;
-
-    const supabase = await createClient();
-
-    // Insert AI tool junction rows
-    if (ai_tool_ids.length > 0) {
-      const aiToolRows = ai_tool_ids.map((ai_tool_id) => ({
-        build_id: buildId,
-        ai_tool_id,
-      }));
-
-      const { error: aiToolsError } = await supabase
-        .from('build_ai_tools')
-        .insert(aiToolRows);
-
-      if (aiToolsError) {
-        return { error: 'Failed to save AI tools' };
-      }
-    }
-
-    // Insert tech stack tag junction rows
-    if (tech_stack_tag_ids.length > 0) {
-      const techStackRows = tech_stack_tag_ids.map((tech_stack_tag_id) => ({
-        build_id: buildId,
-        tech_stack_tag_id,
-      }));
-
-      const { error: techStackError } = await supabase
-        .from('build_tech_stack_tags')
-        .insert(techStackRows);
-
-      if (techStackError) {
-        return { error: 'Failed to save tech stack tags' };
-      }
-    }
-  } catch {
+    buildId = id;
+  } catch (error) {
+    console.error('createBuildAction failed:', error);
     return { error: 'An unexpected error occurred' };
   }
 
-  redirect(Routes.buildDetail(buildId));
+  redirect(buildRoute(buildId));
 }
