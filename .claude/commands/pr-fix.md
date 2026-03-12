@@ -31,18 +31,25 @@ If no PR number provided, ask the user for it.
                   │
                   ▼
 ┌─────────────────────────────────────────┐
+│       Show Issue Plan to User           │
+│  • List blocking issues (❌)            │
+│  • List minor issues (⚠️)              │
+│  • WAIT for approval                    │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
 │          Spawn SDE2 Agent               │
 │  • Use Agent tool with subagent_type     │
-│  • Pass PR context in prompt            │
+│  • Pass PR context + approved plan      │
 │  • Agent executes pr-fix skill          │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────┐
 │          SDE2 Executes pr-fix           │
-│  • Categorize issues (blocking/minor)   │
-│  • Load context (files, rules)          │
-│  • Fix issues one by one                │
+│  • Fix all issues autonomously          │
+│  • Blocking first, then minor           │
 │  • Verify fixes                         │
 └─────────────────────────────────────────┘
 ```
@@ -71,7 +78,30 @@ If no PR number provided, ask the user for it.
    gh pr diff {pr_number}
    ```
 
-### Phase 2: Spawn SDE2 Agent
+### Phase 2: Show Issue Plan
+
+After gathering all review context, categorize and present the issues to the user:
+
+```markdown
+## PR Fix Plan: #{pr_number} — {title}
+
+### Blocking Issues ❌ (fix first)
+
+1. `{file:line}` — {issue description}
+2. `{file:line}` — {issue description}
+
+### Minor Issues ⚠️ (fix after blocking)
+
+1. `{file:line}` — {issue description}
+
+Does this look right? I'll fix all issues autonomously and report back when done.
+```
+
+**WAIT for user approval before proceeding.**
+
+If the user wants to skip or adjust any items, update the list accordingly.
+
+### Phase 3: Spawn SDE2 Agent
 
 **IMPORTANT: You MUST use the Agent tool to spawn the SDE2 agent. Do NOT execute the skill yourself.**
 
@@ -80,19 +110,19 @@ Agent(
   subagent_type: "sde2",
   description: "Fix PR review issues",
   prompt: """
-  Fix issues identified in PR #{pr_number} review.
+  Fix issues identified in PR #{pr_number} review. Fix all issues autonomously without waiting for user input between fixes.
 
   ## PR Details
   - Title: {pr_title}
   - Branch: {branch_name}
   - GitHub Issue: #{issue_number}
 
-  ## Review Issues to Fix
+  ## Approved Issue Plan
 
-  ### Blocking Issues (❌)
+  ### Blocking Issues (❌) — fix first
   {list of blocking issues with file:line references}
 
-  ### Minor Issues (⚠️)
+  ### Minor Issues (⚠️) — fix after blocking
   {list of minor issues with file:line references}
 
   ## Changed Files
@@ -100,9 +130,11 @@ Agent(
 
   ## Instructions
   1. Load appropriate rules based on changed files
-  2. Fix blocking issues first, then minor issues
-  3. Work through one fix at a time
-  4. Verify fixes with typecheck and lint
+  2. Fix all blocking issues first, then all minor issues
+  3. Fix issues one at a time but do NOT stop for user confirmation between fixes
+  4. Only pause if a fix is genuinely ambiguous or requires an architectural decision
+  5. Verify all fixes with typecheck and lint at the end
+  6. Return a complete summary of everything fixed
   """
 )
 ```
@@ -110,11 +142,11 @@ Agent(
 The SDE2 agent will:
 
 - Load the pr-fix skill and follow its workflow
-- Categorize and prioritize issues
-- Fix issues incrementally with user approval
-- Verify fixes with typecheck/lint
+- Fix all issues autonomously (blocking first, then minor)
+- Only pause if a fix is ambiguous or requires an architectural decision
+- Verify all fixes with typecheck/lint at the end
 
-### Phase 3: Report Completion
+### Phase 4: Report Completion
 
 After all fixes are complete, output:
 
@@ -169,6 +201,6 @@ The SDE2 agent fixes issues in this order:
 
 ## Important Notes
 
-- **No patches:** SDE2 will ask user if proper fix is unclear
-- **One at a time:** Fixes are done incrementally with summaries
-- **User approval:** Waits for confirmation after each significant fix
+- **No patches:** SDE2 will ask user if a proper fix is unclear or requires an architectural decision
+- **One at a time:** Fixes are applied incrementally (blocking first, then minor), but without stopping between them
+- **Single wait:** User approves the issue plan upfront — SDE2 then runs all fixes autonomously
