@@ -1,7 +1,7 @@
 'use client';
 
 import { ImagePlusIcon, Loader2Icon, XIcon } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { MimeType } from '@/lib/constants/mime-types';
@@ -57,6 +57,12 @@ export function ScreenshotUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const remainingSlots = maxFiles - screenshots.length - uploading.length;
+
+  // Sync parent whenever screenshots change — avoids stale-closure issues
+  // in async callbacks that would otherwise read an outdated `screenshots`.
+  useEffect(() => {
+    onUrlsChange(screenshots.map((s) => s.url));
+  }, [screenshots, onUrlsChange]);
 
   // -------------------------------------------------------------------------
   // Upload a single file: get signed URL -> upload to storage -> get public URL
@@ -191,9 +197,7 @@ export function ScreenshotUpload({
       }
 
       if (newScreenshots.length > 0) {
-        const updated = [...screenshots, ...newScreenshots];
-        setScreenshots(updated);
-        onUrlsChange(updated.map((s) => s.url));
+        setScreenshots((prev) => [...prev, ...newScreenshots]);
       }
 
       // Reset input so the same file can be re-selected
@@ -201,7 +205,7 @@ export function ScreenshotUpload({
         fileInputRef.current.value = '';
       }
     },
-    [screenshots, remainingSlots, uploadFile, onUrlsChange]
+    [remainingSlots, uploadFile]
   );
 
   // -------------------------------------------------------------------------
@@ -220,11 +224,9 @@ export function ScreenshotUpload({
         return;
       }
 
-      const filtered = screenshots.filter((s) => s.path !== path);
-      setScreenshots(filtered);
-      onUrlsChange(filtered.map((s) => s.url));
+      setScreenshots((prev) => prev.filter((s) => s.path !== path));
     },
-    [supabase, screenshots, onUrlsChange]
+    [supabase]
   );
 
   // -------------------------------------------------------------------------
