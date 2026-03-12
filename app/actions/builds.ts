@@ -30,7 +30,8 @@ export async function createBuildAction(data: BuildFormData) {
     return { error: 'Invalid form data' };
   }
 
-  const { ai_tool_ids, tech_stack_tag_ids, ...buildData } = result.data;
+  const { ai_tool_ids, tech_stack_tag_ids, screenshot_urls, ...buildData } =
+    result.data;
 
   let buildId: string | null = null;
 
@@ -43,6 +44,7 @@ export async function createBuildAction(data: BuildFormData) {
       repoUrl: buildData.repo_url,
       aiToolIds: ai_tool_ids,
       techStackTagIds: tech_stack_tag_ids,
+      screenshotUrls: screenshot_urls,
     });
 
     if (error || !id) {
