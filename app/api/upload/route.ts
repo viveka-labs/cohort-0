@@ -4,10 +4,9 @@ import { z } from 'zod';
 
 import { getUser } from '@/lib/auth';
 import { MimeExtension } from '@/lib/constants/mime-types';
+import { BUCKET_NAME } from '@/lib/constants/storage';
 import { createClient } from '@/lib/supabase/server';
 import { uploadRequestSchema } from '@/lib/validations/upload';
-
-const BUCKET_NAME = 'build-screenshots';
 
 export async function POST(request: Request) {
   const user = await getUser();

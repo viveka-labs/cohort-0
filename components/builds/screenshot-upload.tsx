@@ -5,13 +5,13 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { MimeType } from '@/lib/constants/mime-types';
+import { BUCKET_NAME } from '@/lib/constants/storage';
 import { createClient } from '@/lib/supabase/client';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const BUCKET_NAME = 'build-screenshots';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const ACCEPTED_MIME_TYPES = Object.values(MimeType);
 const ACCEPT_STRING = ACCEPTED_MIME_TYPES.join(',');
@@ -58,6 +58,7 @@ export function ScreenshotUpload({
   onUrlsChange,
   maxFiles = 5,
 }: ScreenshotUploadProps) {
+  const supabase = createClient();
   const [screenshots, setScreenshots] = useState<UploadedScreenshot[]>([]);
   const [uploading, setUploading] = useState<UploadingFile[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +89,6 @@ export function ScreenshotUpload({
       const { token, path } = (await response.json()) as UploadApiResponse;
 
       // 2. Upload the file to Supabase Storage using the signed URL
-      const supabase = createClient();
       const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
         .uploadToSignedUrl(path, token, file, {
@@ -106,7 +106,7 @@ export function ScreenshotUpload({
 
       return { url: publicUrl, path };
     },
-    []
+    [supabase]
   );
 
   // -------------------------------------------------------------------------
@@ -193,11 +193,9 @@ export function ScreenshotUpload({
       }
 
       if (newScreenshots.length > 0) {
-        setScreenshots((prev) => {
-          const updated = [...prev, ...newScreenshots];
-          onUrlsChange(updated.map((s) => s.url));
-          return updated;
-        });
+        const updated = [...screenshots, ...newScreenshots];
+        setScreenshots(updated);
+        onUrlsChange(updated.map((s) => s.url));
       }
 
       // Reset input so the same file can be re-selected
@@ -205,7 +203,7 @@ export function ScreenshotUpload({
         fileInputRef.current.value = '';
       }
     },
-    [remainingSlots, uploadFile, onUrlsChange]
+    [remainingSlots, uploadFile, screenshots, onUrlsChange]
   );
 
   // -------------------------------------------------------------------------
@@ -214,13 +212,11 @@ export function ScreenshotUpload({
 
   const removeScreenshot = useCallback(
     (path: string) => {
-      setScreenshots((prev) => {
-        const updated = prev.filter((s) => s.path !== path);
-        onUrlsChange(updated.map((s) => s.url));
-        return updated;
-      });
+      const updated = screenshots.filter((s) => s.path !== path);
+      setScreenshots(updated);
+      onUrlsChange(updated.map((s) => s.url));
     },
-    [onUrlsChange]
+    [screenshots, onUrlsChange]
   );
 
   // -------------------------------------------------------------------------
