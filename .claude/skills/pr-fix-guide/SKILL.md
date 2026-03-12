@@ -27,8 +27,6 @@ Fix issues identified in PR reviews, addressing both blocking and minor concerns
 
 Before fixing, check for relevant rule files in `.claude/rules/` that apply to the changed files. Load and follow all applicable rules.
 
-**Always load:** [workflow.md](../../rules/workflow.md)
-
 ## Fix Process
 
 ### Phase 1: Gather Review Context
@@ -77,19 +75,22 @@ Before fixing, check for relevant rule files in `.claude/rules/` that apply to t
 
 ### Phase 4: Fix Issues
 
-1. **Work through todos one at a time:**
+Fix all issues autonomously — do NOT stop for user confirmation between individual fixes.
+
+1. **Work through issues one at a time:**
    - Mark todo as `in_progress` before starting
    - Mark as `completed` immediately after finishing
+   - Fix all blocking issues first, then minor issues
 
 2. **For each fix:**
    - Read the specific comment/issue
    - Understand what's being asked
    - Make the change following loaded rules
-   - Summarize what was changed
 
-3. **After each fix:**
-   - Note what was changed and why
-   - Include file:line references
+3. **Only pause for user input if:**
+   - The fix is genuinely ambiguous (the reviewer's intent is unclear)
+   - The fix requires an architectural decision beyond the scope of the comment
+   - A fix introduces a conflict with another pending fix
 
 ### Phase 5: Verify Fixes
 
@@ -149,6 +150,6 @@ After all fixes are complete:
 
 1. **Address the actual feedback** — Don't assume, read carefully
 2. **Follow loaded rules** — Rules files are source of truth
-3. **One fix at a time** — Don't batch changes, fix incrementally
-4. **Verify each fix** — Ensure it actually addresses the comment
+3. **One fix at a time** — Fix incrementally, but without stopping between fixes
+4. **Run autonomously** — User approved the plan upfront; don't ask again unless truly blocked
 5. **Don't over-fix** — Only change what was requested

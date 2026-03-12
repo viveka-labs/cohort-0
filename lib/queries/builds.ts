@@ -94,6 +94,7 @@ export async function createBuildWithRelations(params: {
   repoUrl?: string | null;
   aiToolIds: string[];
   techStackTagIds: string[];
+  screenshotUrls?: string[];
 }) {
   const supabase = await createClient();
 
@@ -101,10 +102,11 @@ export async function createBuildWithRelations(params: {
     p_title: params.title,
     p_description: params.description,
     p_build_type: params.buildType,
-    p_live_url: params.liveUrl ?? null,
-    p_repo_url: params.repoUrl ?? null,
+    p_live_url: params.liveUrl ?? undefined,
+    p_repo_url: params.repoUrl ?? undefined,
     p_ai_tool_ids: params.aiToolIds,
     p_tech_stack_tag_ids: params.techStackTagIds,
+    p_screenshot_urls: params.screenshotUrls ?? [],
   });
 }
 

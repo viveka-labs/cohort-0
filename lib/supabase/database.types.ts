@@ -333,13 +333,14 @@ export type Database = {
     Functions: {
       create_build_with_relations: {
         Args: {
-          p_title: string
-          p_description: string
-          p_build_type: Database["public"]["Enums"]["build_type"]
-          p_live_url?: string | null
-          p_repo_url?: string | null
           p_ai_tool_ids?: string[]
+          p_build_type: Database["public"]["Enums"]["build_type"]
+          p_description: string
+          p_live_url?: string
+          p_repo_url?: string
+          p_screenshot_urls?: string[]
           p_tech_stack_tag_ids?: string[]
+          p_title: string
         }
         Returns: string
       }

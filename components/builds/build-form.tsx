@@ -12,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { createBuildAction } from '@/app/actions/builds';
+import { ScreenshotUpload } from '@/components/builds/screenshot-upload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -90,6 +91,7 @@ export function BuildForm({ aiTools, techStackTags }: BuildFormProps) {
       repo_url: '',
       ai_tool_ids: [],
       tech_stack_tag_ids: [],
+      screenshot_urls: [],
     },
   });
 
@@ -254,6 +256,21 @@ export function BuildForm({ aiTools, techStackTags }: BuildFormProps) {
                 searchPlaceholder="Search tech stack..."
                 emptyMessage="No tags found."
               />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Screenshots */}
+        <FormField
+          control={form.control}
+          name="screenshot_urls"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Screenshots</FormLabel>
+              <FormControl>
+                <ScreenshotUpload onUrlsChange={field.onChange} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

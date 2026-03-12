@@ -4,10 +4,9 @@ import { z } from 'zod';
 
 import { getUser } from '@/lib/auth';
 import { MimeExtension } from '@/lib/constants/mime-types';
+import { BUCKET_NAME } from '@/lib/constants/storage';
 import { createClient } from '@/lib/supabase/server';
 import { uploadRequestSchema } from '@/lib/validations/upload';
-
-const BUCKET_NAME = 'build-screenshots';
 
 export async function POST(request: Request) {
   const user = await getUser();
@@ -32,24 +31,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const { contentType, buildId } = result.data;
+  const { contentType } = result.data;
 
   const supabase = await createClient();
 
-  const { data: build, error: buildError } = await supabase
-    .from('builds')
-    .select('id')
-    .eq('id', buildId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (buildError || !build) {
-    return NextResponse.json({ error: 'Build not found' }, { status: 404 });
-  }
-
   const extension = MimeExtension[contentType];
-  const generatedFileName = `${crypto.randomUUID()}${extension}`;
-  const path = `${user.id}/${buildId}/${generatedFileName}`;
+  const fileName = `${crypto.randomUUID()}${extension}`;
+  const path = `${user.id}/${fileName}`;
 
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
