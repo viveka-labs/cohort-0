@@ -3,10 +3,10 @@
 import { redirect } from 'next/navigation';
 
 import { requireUser } from '@/lib/auth';
-import { buildRoute } from '@/lib/constants/routes';
+import { buildRoute, Routes } from '@/lib/constants/routes';
 import { BUCKET_NAME } from '@/lib/constants/storage';
 import { clientEnv } from '@/lib/env.client';
-import { createBuildWithRelations } from '@/lib/queries/builds';
+import { createBuildWithRelations, deleteBuild } from '@/lib/queries/builds';
 import { type BuildFormData, buildFormSchema } from '@/lib/validations/build';
 
 /**
@@ -73,4 +73,32 @@ export async function createBuildAction(data: BuildFormData) {
   }
 
   redirect(buildRoute(buildId));
+}
+
+/**
+ * Server action that deletes a build by ID.
+ *
+ * Steps:
+ * 1. Authenticate the user (redirects to login if not signed in)
+ * 2. Call `deleteBuild` — RLS ensures only the owner can delete
+ * 3. Redirect to the home page on success
+ *
+ * Returns `{ error: string }` on failure so the client can display it.
+ * On success, redirects -- so the caller never receives a return value.
+ */
+export async function deleteBuildAction(buildId: string) {
+  await requireUser();
+
+  try {
+    const { error } = await deleteBuild(buildId);
+
+    if (error) {
+      return { error: error.message ?? 'Failed to delete build' };
+    }
+  } catch (error) {
+    console.error('deleteBuildAction failed:', error);
+    return { error: 'An unexpected error occurred' };
+  }
+
+  redirect(Routes.HOME);
 }
