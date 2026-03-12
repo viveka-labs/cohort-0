@@ -331,6 +331,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_build_with_relations: {
+        Args: {
+          p_title: string
+          p_description: string
+          p_build_type: Database["public"]["Enums"]["build_type"]
+          p_live_url?: string | null
+          p_repo_url?: string | null
+          p_ai_tool_ids?: string[]
+          p_tech_stack_tag_ids?: string[]
+        }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {

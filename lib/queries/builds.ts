@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
-import type { BuildInsert, BuildUpdate, BuildWithDetails } from '@/types';
+import type { BuildType, BuildUpdate, BuildWithDetails } from '@/types';
 
 /**
  * Shared select string for fetching builds with all related data.
@@ -77,23 +77,35 @@ export async function getBuildById(id: string) {
 }
 
 /**
- * Creates a new build. Returns the inserted row.
+ * Creates a new build along with its AI tool and tech stack tag
+ * associations in a single atomic database transaction.
  *
- * Accepts build data without `user_id` and a separate `userId` param.
- * This ensures callers always provide the authenticated user's ID
- * explicitly. RLS enforces ownership.
+ * Uses a PostgreSQL function (`create_build_with_relations`) so that
+ * all inserts succeed or fail together -- no orphaned rows.
+ *
+ * The function uses `auth.uid()` internally to set the build owner,
+ * so the caller must be authenticated.
  */
-export async function createBuild(
-  data: Omit<BuildInsert, 'user_id'>,
-  userId: string
-) {
+export async function createBuildWithRelations(params: {
+  title: string;
+  description: string;
+  buildType: BuildType;
+  liveUrl?: string | null;
+  repoUrl?: string | null;
+  aiToolIds: string[];
+  techStackTagIds: string[];
+}) {
   const supabase = await createClient();
 
-  return supabase
-    .from('builds')
-    .insert({ ...data, user_id: userId })
-    .select()
-    .single();
+  return supabase.rpc('create_build_with_relations', {
+    p_title: params.title,
+    p_description: params.description,
+    p_build_type: params.buildType,
+    p_live_url: params.liveUrl ?? null,
+    p_repo_url: params.repoUrl ?? null,
+    p_ai_tool_ids: params.aiToolIds,
+    p_tech_stack_tag_ids: params.techStackTagIds,
+  });
 }
 
 /**
