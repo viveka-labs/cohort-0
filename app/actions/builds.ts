@@ -6,9 +6,17 @@ import { requireUser } from '@/lib/auth';
 import { buildRoute, Routes } from '@/lib/constants/routes';
 import { BUCKET_NAME } from '@/lib/constants/storage';
 import { clientEnv } from '@/lib/env.client';
-import { createBuildWithRelations, deleteBuild } from '@/lib/queries/builds';
+import {
+  createBuildWithRelations,
+  deleteBuild,
+  updateBuildWithRelations,
+} from '@/lib/queries/builds';
 import { createClient } from '@/lib/supabase/server';
 import { type BuildFormData, buildFormSchema } from '@/lib/validations/build';
+
+/** Matches a valid UUID v4 string. */
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Server action that creates a new build with its associated AI tools
@@ -76,9 +84,74 @@ export async function createBuildAction(data: BuildFormData) {
   redirect(buildRoute(buildId));
 }
 
-/** Matches a valid UUID v4 string. */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Server action that updates an existing build with its associated AI tools,
+ * tech stack tags, and screenshots in a single atomic database transaction.
+ *
+ * Steps:
+ * 1. Validate `buildId` format
+ * 2. Authenticate the user (redirects to login if not signed in)
+ * 3. Validate form data against the Zod schema
+ * 4. Validate that all screenshot URLs belong to the authenticated user
+ * 5. Call the `update_build_with_relations` RPC function, which updates the
+ *    build row and delete-reinserts all junction rows in one transaction
+ * 6. Redirect to the build's detail page
+ *
+ * Returns `{ error: string }` on failure so the client can display it.
+ * On success, redirects -- so the caller never receives a return value.
+ */
+export async function updateBuildAction(buildId: string, data: BuildFormData) {
+  if (!UUID_REGEX.test(buildId)) {
+    return { error: 'Invalid build ID' };
+  }
+
+  const user = await requireUser();
+
+  const result = buildFormSchema.safeParse(data);
+
+  if (!result.success) {
+    return { error: 'Invalid form data' };
+  }
+
+  const { ai_tool_ids, tech_stack_tag_ids, screenshot_urls, ...buildData } =
+    result.data;
+
+  // Validate that all screenshot URLs originate from our Supabase Storage
+  // bucket under the authenticated user's folder. This prevents injection
+  // of arbitrary external URLs (tracking pixels, XSS via SVG, etc.).
+  const allowedPrefix = `${clientEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${user.id}/`;
+
+  const hasInvalidUrl = screenshot_urls.some(
+    (url) => !url.startsWith(allowedPrefix)
+  );
+
+  if (hasInvalidUrl) {
+    return { error: 'Invalid screenshot URL' };
+  }
+
+  try {
+    const { data: id, error } = await updateBuildWithRelations({
+      buildId,
+      title: buildData.title,
+      description: buildData.description,
+      buildType: buildData.build_type,
+      liveUrl: buildData.live_url,
+      repoUrl: buildData.repo_url,
+      aiToolIds: ai_tool_ids,
+      techStackTagIds: tech_stack_tag_ids,
+      screenshotUrls: screenshot_urls,
+    });
+
+    if (error || !id) {
+      return { error: error?.message ?? 'Failed to update build' };
+    }
+  } catch (error) {
+    console.error('updateBuildAction failed:', error);
+    return { error: 'An unexpected error occurred' };
+  }
+
+  redirect(buildRoute(buildId));
+}
 
 /**
  * Server action that deletes a build by ID.

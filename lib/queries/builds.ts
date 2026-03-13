@@ -111,6 +111,43 @@ export async function createBuildWithRelations(params: {
 }
 
 /**
+ * Updates an existing build along with its AI tool, tech stack tag,
+ * and screenshot associations in a single atomic database transaction.
+ *
+ * Uses a PostgreSQL function (`update_build_with_relations`) that
+ * deletes and re-inserts all junction/child rows, so the caller
+ * doesn't need to diff what changed -- just pass the full new state.
+ *
+ * The function uses `auth.uid()` internally to verify ownership,
+ * so the caller must be authenticated.
+ */
+export async function updateBuildWithRelations(params: {
+  buildId: string;
+  title: string;
+  description: string;
+  buildType: BuildType;
+  liveUrl?: string | null;
+  repoUrl?: string | null;
+  aiToolIds: string[];
+  techStackTagIds: string[];
+  screenshotUrls?: string[];
+}) {
+  const supabase = await createClient();
+
+  return supabase.rpc('update_build_with_relations', {
+    p_build_id: params.buildId,
+    p_title: params.title,
+    p_description: params.description,
+    p_build_type: params.buildType,
+    p_live_url: params.liveUrl ?? undefined,
+    p_repo_url: params.repoUrl ?? undefined,
+    p_ai_tool_ids: params.aiToolIds,
+    p_tech_stack_tag_ids: params.techStackTagIds,
+    p_screenshot_urls: params.screenshotUrls ?? [],
+  });
+}
+
+/**
  * Updates an existing build by ID. Returns the updated row.
  *
  * Callers must ensure `user_id` on `data` matches the authenticated session.
