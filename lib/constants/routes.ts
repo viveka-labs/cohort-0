@@ -10,3 +10,13 @@ export const Routes = {
 export function buildRoute(id: string) {
   return `/builds/${id}` as const;
 }
+
+/** Returns the path for a specific build's edit page. */
+export function buildEditRoute(id: string) {
+  return `/builds/${id}/edit` as const;
+}
+
+/** Returns the path for a specific user's profile page. */
+export function profileRoute(id: string) {
+  return `/profile/${id}` as const;
+}

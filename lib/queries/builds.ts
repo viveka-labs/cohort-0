@@ -10,7 +10,7 @@ import type { BuildType, BuildUpdate, BuildWithDetails } from '@/types';
  */
 const BUILD_WITH_DETAILS_SELECT = `
   *,
-  profile:profiles(*),
+  profile:profiles!builds_user_id_fkey(*),
   screenshots:build_screenshots(*),
   ai_tools:build_ai_tools(
     ...ai_tools(*)

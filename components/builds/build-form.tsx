@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { BUILD_TYPE_LABELS } from '@/lib/constants/builds';
 import { cn } from '@/lib/utils';
 import {
   type BuildFormData,
@@ -52,18 +53,6 @@ import {
   buildFormSchema,
 } from '@/lib/validations/build';
 import type { AiTool, TechStackTag } from '@/types';
-
-// ---------------------------------------------------------------------------
-// Build type labels — maps enum values to human-readable text
-// ---------------------------------------------------------------------------
-
-const BUILD_TYPE_LABELS: Record<BuildFormData['build_type'], string> = {
-  app: 'App',
-  feature: 'Feature',
-  fix: 'Fix',
-  automation: 'Automation',
-  experiment: 'Experiment',
-};
 
 // ---------------------------------------------------------------------------
 // Props
