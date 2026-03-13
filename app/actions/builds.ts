@@ -129,6 +129,8 @@ export async function updateBuildAction(buildId: string, data: BuildFormData) {
     return { error: 'Invalid screenshot URL' };
   }
 
+  let updatedBuildId: string | null = null;
+
   try {
     const { data: id, error } = await updateBuildWithRelations({
       buildId,
@@ -145,12 +147,14 @@ export async function updateBuildAction(buildId: string, data: BuildFormData) {
     if (error || !id) {
       return { error: error?.message ?? 'Failed to update build' };
     }
+
+    updatedBuildId = id;
   } catch (error) {
     console.error('updateBuildAction failed:', error);
     return { error: 'An unexpected error occurred' };
   }
 
-  redirect(buildRoute(buildId));
+  redirect(buildRoute(updatedBuildId));
 }
 
 /**

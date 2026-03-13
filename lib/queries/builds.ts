@@ -139,8 +139,12 @@ export async function updateBuildWithRelations(params: {
     p_title: params.title,
     p_description: params.description,
     p_build_type: params.buildType,
-    p_live_url: params.liveUrl ?? undefined,
-    p_repo_url: params.repoUrl ?? undefined,
+    // Explicit `null` (not `undefined`) so PostgREST sends JSON null and
+    // the SQL column is cleared when a user removes a URL during editing.
+    // The generated types model optional params as `?: string`, but the
+    // underlying SQL function accepts NULL — the assertion is safe.
+    p_live_url: (params.liveUrl ?? null) as string | undefined,
+    p_repo_url: (params.repoUrl ?? null) as string | undefined,
     p_ai_tool_ids: params.aiToolIds,
     p_tech_stack_tag_ids: params.techStackTagIds,
     p_screenshot_urls: params.screenshotUrls ?? [],
