@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { buildEditRoute } from '@/lib/constants/routes';
 
 type BuildOwnerActionsProps = {
   buildId: string;
@@ -39,7 +40,7 @@ export function BuildOwnerActions({ buildId }: BuildOwnerActionsProps) {
   return (
     <div className="flex items-center gap-2">
       <Button variant="outline" size="sm" asChild>
-        <Link href={`/builds/${buildId}/edit`}>
+        <Link href={buildEditRoute(buildId)}>
           <PencilIcon />
           Edit
         </Link>

@@ -35,7 +35,6 @@ export function ScreenshotGallery({ screenshots }: ScreenshotGalleryProps) {
           src={mainScreenshot.url}
           alt={`Screenshot ${selectedIndex + 1} of ${screenshots.length}`}
           fill
-          unoptimized
           className="object-cover"
           sizes="(max-width: 768px) 100vw, 768px"
           priority
@@ -63,7 +62,6 @@ export function ScreenshotGallery({ screenshots }: ScreenshotGalleryProps) {
                 src={screenshot.url}
                 alt={`Thumbnail ${index + 1}`}
                 fill
-                unoptimized
                 className="object-cover"
                 sizes="80px"
               />

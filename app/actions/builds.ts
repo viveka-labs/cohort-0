@@ -76,36 +76,64 @@ export async function createBuildAction(data: BuildFormData) {
   redirect(buildRoute(buildId));
 }
 
+/** Matches a valid UUID v4 string. */
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Server action that deletes a build by ID.
  *
  * Steps:
- * 1. Authenticate the user (redirects to login if not signed in)
- * 2. Call `deleteBuild` — RLS ensures only the owner can delete
- * 3. Redirect to the home page on success
+ * 1. Validate `buildId` format
+ * 2. Authenticate the user (redirects to login if not signed in)
+ * 3. Verify ownership — the build must belong to the authenticated user
+ * 4. Delete screenshot files from storage (best-effort)
+ * 5. Delete the build row — DB cascade removes related rows
+ * 6. Redirect to the home page on success
  *
  * Returns `{ error: string }` on failure so the client can display it.
  * On success, redirects -- so the caller never receives a return value.
  */
 export async function deleteBuildAction(buildId: string) {
-  await requireUser();
+  if (!UUID_REGEX.test(buildId)) {
+    return { error: 'Invalid build ID' };
+  }
+
+  const user = await requireUser();
 
   try {
     const supabase = await createClient();
 
-    // 1. Fetch screenshot URLs before deleting — the DB rows cascade-delete
+    // 1. Verify the build exists and belongs to the authenticated user
+    //    (defense-in-depth — RLS also enforces this on delete).
+    const { data: build, error: buildError } = await supabase
+      .from('builds')
+      .select('id')
+      .eq('id', buildId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (buildError || !build) {
+      return { error: 'Build not found' };
+    }
+
+    // 2. Fetch screenshot URLs before deleting — the DB rows cascade-delete
     //    when the build is removed, so we must grab them first.
     const { data: screenshots } = await supabase
       .from('build_screenshots')
       .select('url')
       .eq('build_id', buildId);
 
-    // 2. Delete the files from storage (best-effort — don't block deletion
+    // 3. Delete the files from storage (best-effort — don't block deletion
     //    if storage cleanup fails; the DB row is the source of truth).
     if (screenshots && screenshots.length > 0) {
       const storagePrefix = `${clientEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/`;
       const paths = screenshots
-        .map((s) => s.url.replace(storagePrefix, ''))
+        .map((s) =>
+          s.url.startsWith(storagePrefix)
+            ? s.url.slice(storagePrefix.length)
+            : ''
+        )
         .filter((p) => p.length > 0);
 
       if (paths.length > 0) {
@@ -119,7 +147,7 @@ export async function deleteBuildAction(buildId: string) {
       }
     }
 
-    // 3. Delete the build — DB cascade removes the build_screenshots rows.
+    // 4. Delete the build — DB cascade removes the build_screenshots rows.
     const { error } = await deleteBuild(buildId);
 
     if (error) {
