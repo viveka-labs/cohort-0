@@ -11,7 +11,7 @@ import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-import { createBuildAction } from '@/app/actions/builds';
+import { createBuildAction, updateBuildAction } from '@/app/actions/builds';
 import { ScreenshotUpload } from '@/components/builds/screenshot-upload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ import {
   type BuildFormInput,
   buildFormSchema,
 } from '@/lib/validations/build';
-import type { AiTool, TechStackTag } from '@/types';
+import type { AiTool, BuildWithDetails, TechStackTag } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -61,32 +61,60 @@ import type { AiTool, TechStackTag } from '@/types';
 type BuildFormProps = {
   aiTools: AiTool[];
   techStackTags: TechStackTag[];
+  /** Whether the form is creating a new build or editing an existing one. */
+  mode?: 'create' | 'edit';
+  /** Existing build data to pre-populate in edit mode. */
+  initialData?: BuildWithDetails;
 };
 
 // ---------------------------------------------------------------------------
 // BuildForm
 // ---------------------------------------------------------------------------
 
-export function BuildForm({ aiTools, techStackTags }: BuildFormProps) {
+export function BuildForm({
+  aiTools,
+  techStackTags,
+  mode = 'create',
+  initialData,
+}: BuildFormProps) {
   const [isPending, startTransition] = useTransition();
+
+  const isEditing = mode === 'edit';
 
   const form = useForm<BuildFormInput, unknown, BuildFormData>({
     resolver: zodResolver(buildFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      build_type: 'app',
-      live_url: '',
-      repo_url: '',
-      ai_tool_ids: [],
-      tech_stack_tag_ids: [],
-      screenshot_urls: [],
-    },
+    defaultValues:
+      isEditing && initialData
+        ? {
+            title: initialData.title,
+            description: initialData.description,
+            build_type: initialData.build_type,
+            live_url: initialData.live_url ?? '',
+            repo_url: initialData.repo_url ?? '',
+            ai_tool_ids: initialData.ai_tools.map((tool) => tool.id),
+            tech_stack_tag_ids: initialData.tech_stack_tags.map(
+              (tag) => tag.id
+            ),
+            screenshot_urls: initialData.screenshots.map((s) => s.url),
+          }
+        : {
+            title: '',
+            description: '',
+            build_type: 'app',
+            live_url: '',
+            repo_url: '',
+            ai_tool_ids: [],
+            tech_stack_tag_ids: [],
+            screenshot_urls: [],
+          },
   });
 
   function onSubmit(data: BuildFormData) {
     startTransition(async () => {
-      const result = await createBuildAction(data);
+      const result =
+        isEditing && initialData
+          ? await updateBuildAction(initialData.id, data)
+          : await createBuildAction(data);
 
       if (result?.error) {
         toast.error(result.error);
@@ -258,7 +286,14 @@ export function BuildForm({ aiTools, techStackTags }: BuildFormProps) {
             <FormItem>
               <FormLabel>Screenshots</FormLabel>
               <FormControl>
-                <ScreenshotUpload onUrlsChange={field.onChange} />
+                <ScreenshotUpload
+                  onUrlsChange={field.onChange}
+                  initialScreenshots={
+                    isEditing && initialData
+                      ? initialData.screenshots.map((s) => s.url)
+                      : undefined
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -268,7 +303,13 @@ export function BuildForm({ aiTools, techStackTags }: BuildFormProps) {
         {/* Submit */}
         <Button type="submit" className="w-full" disabled={isPending}>
           {isPending && <Loader2Icon className="animate-spin" />}
-          {isPending ? 'Submitting...' : 'Submit Build'}
+          {isPending
+            ? isEditing
+              ? 'Saving...'
+              : 'Submitting...'
+            : isEditing
+              ? 'Save Changes'
+              : 'Submit Build'}
         </Button>
       </form>
     </Form>

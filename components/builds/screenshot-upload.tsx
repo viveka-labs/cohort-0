@@ -40,18 +40,46 @@ type ScreenshotUploadProps = {
   onUrlsChange: (urls: string[]) => void;
   /** Maximum number of screenshots allowed. Defaults to 5. */
   maxFiles?: number;
+  /** Pre-existing screenshot URLs to display in edit mode. */
+  initialScreenshots?: string[];
 };
 
 // ---------------------------------------------------------------------------
 // ScreenshotUpload
 // ---------------------------------------------------------------------------
 
+/**
+ * Derives the Supabase Storage path from a public URL.
+ *
+ * Public URLs follow the pattern:
+ *   {SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{path}
+ *
+ * Returns the `{path}` portion, which is what the storage API needs
+ * for operations like deletion.
+ */
+function deriveStoragePath(publicUrl: string): string {
+  const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
+  const index = publicUrl.indexOf(marker);
+
+  if (index === -1) {
+    return publicUrl;
+  }
+
+  return publicUrl.slice(index + marker.length);
+}
+
 export function ScreenshotUpload({
   onUrlsChange,
   maxFiles = 5,
+  initialScreenshots = [],
 }: ScreenshotUploadProps) {
   const supabase = createClient();
-  const [screenshots, setScreenshots] = useState<UploadedScreenshot[]>([]);
+  const [screenshots, setScreenshots] = useState<UploadedScreenshot[]>(() =>
+    initialScreenshots.map((url) => ({
+      url,
+      path: deriveStoragePath(url),
+    }))
+  );
   const [uploading, setUploading] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
