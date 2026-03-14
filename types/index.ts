@@ -45,6 +45,21 @@ export type CommentUpdate = TablesUpdate<'comments'>;
 export type BuildType = Enums<'build_type'>;
 
 // ---------------------------------------------------------------------------
+// Filter types — used for parameterized queries
+// ---------------------------------------------------------------------------
+
+/**
+ * Optional filters for the feed query. All fields are optional —
+ * omitting a field (or passing an empty array) disables that filter.
+ */
+export interface FeedFilters {
+  /** Restrict results to these build types (e.g. "app", "feature"). */
+  buildTypes?: BuildType[];
+  /** Restrict results to builds that use at least one of these AI tools. */
+  aiToolIds?: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Composite types — used when fetching builds with joined relations
 // ---------------------------------------------------------------------------
 
