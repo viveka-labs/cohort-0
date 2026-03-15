@@ -127,6 +127,34 @@ export async function getBuilds(filters?: FeedFilters) {
 }
 
 /**
+ * Fetches all builds for a specific user, including the author profile,
+ * screenshots, AI tools, tech stack tags, and upvote count.
+ *
+ * Results are ordered by newest first (no pagination — profile pages
+ * show the complete list).
+ */
+export async function getBuildsForUser(userId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('builds')
+    .select(BUILD_WITH_DETAILS_SELECT)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  const builds: BuildWithDetails[] = (data ?? []).map((build) => {
+    const { upvotes, ...rest } = build;
+    return { ...rest, upvote_count: upvotes[0]?.count ?? 0 };
+  });
+
+  return { data: builds, error: null };
+}
+
+/**
  * Fetches a single build by ID with all related data (profile,
  * screenshots, AI tools, tech stack tags, and upvote count).
  *
