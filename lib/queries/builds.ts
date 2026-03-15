@@ -1,7 +1,12 @@
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
-import type { BuildType, BuildUpdate, BuildWithDetails } from '@/types';
+import type {
+  BuildType,
+  BuildUpdate,
+  BuildWithDetails,
+  FeedFilters,
+} from '@/types';
 
 /**
  * Shared select string for fetching builds with all related data.
@@ -21,6 +26,26 @@ const BUILD_WITH_DETAILS_SELECT = `
   upvotes:upvotes(count)
 ` as const;
 
+/**
+ * Select string that includes an additional `!inner` join on `build_ai_tools`
+ * for filtering. The alias `filter_ai` restricts parent rows to those with
+ * at least one matching AI tool, without corrupting the display join
+ * (`ai_tools`) that fetches the full list of AI tools per build.
+ */
+const BUILD_WITH_DETAILS_AND_AI_FILTER_SELECT = `
+  *,
+  profile:profiles!builds_user_id_fkey(*),
+  screenshots:build_screenshots(*),
+  ai_tools:build_ai_tools(
+    ...ai_tools(*)
+  ),
+  tech_stack_tags:build_tech_stack_tags(
+    ...tech_stack_tags(*)
+  ),
+  upvotes:upvotes(count),
+  filter_ai:build_ai_tools!inner(ai_tool_id)
+` as const;
+
 /** Maximum number of builds returned per page. */
 const BUILDS_PAGE_SIZE = 20;
 
@@ -30,27 +55,73 @@ const BUILDS_PAGE_SIZE = 20;
  * (via junction table), and upvote count.
  *
  * Results are ordered by newest first and limited to {@link BUILDS_PAGE_SIZE}.
+ *
+ * Optional filters narrow the results server-side:
+ * - `buildTypes` — only builds whose `build_type` is in the list
+ * - `aiToolIds` — only builds linked to at least one of the given AI tools
+ *
+ * Omitting a filter (or passing an empty array) returns all builds for
+ * that dimension, so the unfiltered call path is unchanged.
  */
-export async function getBuilds() {
+export async function getBuilds(filters?: FeedFilters) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const activeBuildTypes = filters?.buildTypes?.length
+    ? filters.buildTypes
+    : null;
+  const activeAiToolIds = filters?.aiToolIds?.length ? filters.aiToolIds : null;
+
+  // When filtering by AI tool we use a separate code path that includes
+  // an `!inner` join alias (`filter_ai`). This keeps both select strings
+  // as compile-time literal types so Supabase's PostgREST type inference
+  // works correctly in each branch.
+  if (activeAiToolIds) {
+    let query = supabase
+      .from('builds')
+      .select(BUILD_WITH_DETAILS_AND_AI_FILTER_SELECT)
+      .in('filter_ai.ai_tool_id', activeAiToolIds)
+      .order('created_at', { ascending: false })
+      .range(0, BUILDS_PAGE_SIZE - 1);
+
+    if (activeBuildTypes) {
+      query = query.in('build_type', activeBuildTypes);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    const builds: BuildWithDetails[] = (data ?? []).map((build) => {
+      const { filter_ai: _filter_ai, ...rest } = build;
+      return { ...rest, upvote_count: build.upvotes[0]?.count ?? 0 };
+    });
+
+    return { data: builds, error: null };
+  }
+
+  // No AI tool filter — use the standard select without the extra join.
+  let query = supabase
     .from('builds')
     .select(BUILD_WITH_DETAILS_SELECT)
     .order('created_at', { ascending: false })
     .range(0, BUILDS_PAGE_SIZE - 1);
 
+  if (activeBuildTypes) {
+    query = query.in('build_type', activeBuildTypes);
+  }
+
+  const { data, error } = await query;
+
   if (error) {
     return { data: null, error };
   }
 
-  const builds: BuildWithDetails[] = (data ?? []).map(
-    (build) =>
-      ({
-        ...build,
-        upvote_count: build.upvotes[0]?.count ?? 0,
-      }) as BuildWithDetails
-  );
+  const builds: BuildWithDetails[] = (data ?? []).map((build) => {
+    const { upvotes, ...rest } = build;
+    return { ...rest, upvote_count: upvotes[0]?.count ?? 0 };
+  });
 
   return { data: builds, error: null };
 }

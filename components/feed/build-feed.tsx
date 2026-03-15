@@ -12,6 +12,8 @@ import { BuildCard } from './build-card';
 
 type BuildFeedProps = {
   builds: BuildWithDetails[];
+  /** Whether the feed is being filtered. Affects the empty state message. */
+  hasActiveFilters?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -23,9 +25,26 @@ type BuildFeedProps = {
  * there are no builds to display.
  *
  * Grid layout: 1 column on mobile, 2 columns at `sm`, 3 columns at `lg`.
+ *
+ * When `hasActiveFilters` is true and there are no results, it shows a
+ * "No builds match your filters" message with a link to clear filters.
  */
-export function BuildFeed({ builds }: BuildFeedProps) {
+export function BuildFeed({
+  builds,
+  hasActiveFilters = false,
+}: BuildFeedProps) {
   if (builds.length === 0) {
+    if (hasActiveFilters) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+          <p className="text-muted-foreground">No builds match your filters.</p>
+          <Button asChild variant="outline">
+            <Link href={Routes.HOME}>Clear filters</Link>
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
         <p className="text-muted-foreground">

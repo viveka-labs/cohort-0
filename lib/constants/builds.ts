@@ -13,3 +13,9 @@ export const BUILD_TYPE_LABELS: Record<BuildType, string> = {
   automation: 'Automation',
   experiment: 'Experiment',
 };
+
+/** URL search param key for build type filters. */
+export const BUILD_TYPE_PARAM = 'buildType';
+
+/** URL search param key for AI tool filters. */
+export const AI_TOOL_PARAM = 'aiTool';
