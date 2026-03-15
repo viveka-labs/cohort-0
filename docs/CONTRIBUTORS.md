@@ -1,7 +1,6 @@
 # CONTRIBUTORS
-1. Praful Jain
-2. Yo Yo
-3. Divyansh Pareek
-1. Prasad Patewar
-2. divyansh pareek
-3. Sakshi Gupta
+1. Yash aka Farzi Artist
+2. Prasad Patewar
+3. divyansh pareek
+4. Sakshi Gupta
+5. Praful Jain
