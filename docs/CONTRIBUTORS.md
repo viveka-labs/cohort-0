@@ -1,4 +1,8 @@
 # CONTRIBUTORS
 
-1. Priya
-2. Makwana
+1. Yash aka Farzi Artist
+2. Prasad Patewar
+3. divyansh pareek
+4. Sakshi Gupta
+5. Praful Jain
+6. Priya Makwana
