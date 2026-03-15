@@ -345,6 +345,20 @@ export type Database = {
         Returns: string
       }
       is_admin: { Args: never; Returns: boolean }
+      update_build_with_relations: {
+        Args: {
+          p_ai_tool_ids?: string[]
+          p_build_id: string
+          p_build_type: Database["public"]["Enums"]["build_type"]
+          p_description: string
+          p_live_url?: string
+          p_repo_url?: string
+          p_screenshot_urls?: string[]
+          p_tech_stack_tag_ids?: string[]
+          p_title: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       build_type: "app" | "feature" | "fix" | "automation" | "experiment"

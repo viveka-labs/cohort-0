@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
     root: import.meta.dirname,
   },
   images: {
+    // Required for local Supabase Docker (localhost resolves to a private IP).
+    // Only enabled in development — never expose in production.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === 'development',
     remotePatterns: [
       // Remote Supabase Storage (dev + prod): e.g. https://<project-ref>.supabase.co
       {
@@ -12,10 +15,10 @@ const nextConfig: NextConfig = {
         hostname: '**.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
-      // Local Supabase Storage (Docker): http://127.0.0.1:54321
+      // Local Supabase Storage (Docker): http://localhost:54321
       {
         protocol: 'http',
-        hostname: '127.0.0.1',
+        hostname: 'localhost',
         port: '54321',
         pathname: '/storage/v1/object/public/**',
       },
