@@ -4,6 +4,7 @@ import { ProfileBuildList } from '@/components/profile/profile-build-list';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { getBuildsForUser } from '@/lib/queries/builds';
 import { getProfileById } from '@/lib/queries/profiles';
+import { isUuid } from '@/lib/utils';
 
 type PublicProfilePageProps = {
   params: Promise<{ id: string }>;
@@ -14,23 +15,26 @@ export default async function PublicProfilePage({
 }: PublicProfilePageProps) {
   const { id } = await params;
 
-  const [profileResult, buildsResult] = await Promise.all([
-    getProfileById(id),
-    getBuildsForUser(id).catch(() => ({ data: null, error: null })),
-  ]);
-
-  if (!profileResult.data) {
+  if (!isUuid(id)) {
     notFound();
   }
 
-  const profile = profileResult.data;
-  const builds = buildsResult.data ?? [];
+  const [{ data: profile }, { data: builds, error: buildsError }] =
+    await Promise.all([getProfileById(id), getBuildsForUser(id)]);
+
+  if (!profile) {
+    notFound();
+  }
+
+  if (buildsError) {
+    throw buildsError;
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="space-y-10">
         <ProfileHeader profile={profile} />
-        <ProfileBuildList builds={builds} />
+        <ProfileBuildList builds={builds ?? []} />
       </div>
     </main>
   );

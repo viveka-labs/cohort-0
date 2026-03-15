@@ -10,6 +10,7 @@ import { getUser } from '@/lib/auth';
 import { BUILD_TYPE_LABELS } from '@/lib/constants/builds';
 import { profileRoute } from '@/lib/constants/routes';
 import { getBuildById } from '@/lib/queries/builds';
+import { isUuid } from '@/lib/utils';
 
 type BuildDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -19,6 +20,11 @@ export default async function BuildDetailPage({
   params,
 }: BuildDetailPageProps) {
   const { id } = await params;
+
+  if (!isUuid(id)) {
+    notFound();
+  }
+
   const [{ data: build }, user] = await Promise.all([
     getBuildById(id),
     getUser(),

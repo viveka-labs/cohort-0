@@ -6,6 +6,7 @@ import { buildRoute } from '@/lib/constants/routes';
 import { getAiTools } from '@/lib/queries/ai-tools';
 import { getBuildById } from '@/lib/queries/builds';
 import { getTechStackTags } from '@/lib/queries/tech-stack-tags';
+import { isUuid } from '@/lib/utils';
 
 type EditBuildPageProps = {
   params: Promise<{ id: string }>;
@@ -14,16 +15,28 @@ type EditBuildPageProps = {
 export default async function EditBuildPage({ params }: EditBuildPageProps) {
   const { id } = await params;
 
-  const [user, { data: build }, { data: aiTools }, { data: techStackTags }] =
-    await Promise.all([
-      requireUser(),
-      getBuildById(id),
-      getAiTools(),
-      getTechStackTags(),
-    ]);
+  if (!isUuid(id)) {
+    notFound();
+  }
+
+  const [
+    user,
+    { data: build },
+    { data: aiTools, error: aiToolsError },
+    { data: techStackTags, error: techStackTagsError },
+  ] = await Promise.all([
+    requireUser(),
+    getBuildById(id),
+    getAiTools(),
+    getTechStackTags(),
+  ]);
 
   if (!build) {
     notFound();
+  }
+
+  if (aiToolsError || techStackTagsError) {
+    throw new Error('Failed to load form data');
   }
 
   // Builds are public, so redirecting non-owners to the view page is
