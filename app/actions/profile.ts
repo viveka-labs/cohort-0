@@ -18,16 +18,24 @@ function avatarStoragePrefix(userId: string): string {
 
 /**
  * Extracts the storage path from a full avatar URL.
- * Returns null if the URL does not belong to our avatars bucket.
+ * Returns null if the URL does not belong to the authenticated user's
+ * avatar folder.
+ *
+ * The returned path is relative to the bucket root (e.g. `{userId}/{filename}`)
+ * because `supabase.storage.from(bucket).remove()` expects bucket-relative paths.
  */
 function extractAvatarStoragePath(url: string, userId: string): string | null {
-  const prefix = avatarStoragePrefix(userId);
+  // Ownership check — the URL must belong to this user's folder.
+  const ownershipPrefix = avatarStoragePrefix(userId);
 
-  if (!url.startsWith(prefix)) {
+  if (!url.startsWith(ownershipPrefix)) {
     return null;
   }
 
-  return url.slice(prefix.length);
+  // Slice from the bucket name boundary so the result includes `{userId}/{filename}`.
+  const bucketPrefix = `${clientEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${AVATAR_BUCKET_NAME}/`;
+
+  return url.slice(bucketPrefix.length);
 }
 
 /**
