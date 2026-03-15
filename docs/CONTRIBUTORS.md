@@ -1,1 +1,3 @@
 # CONTRIBUTORS
+
+1. Yash
