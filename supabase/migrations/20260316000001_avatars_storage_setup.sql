@@ -3,8 +3,8 @@
 -- =============================================================================
 
 -- Create the avatars bucket (public read)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', true)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('avatars', 'avatars', true, 5242880, ARRAY['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 ON CONFLICT (id) DO NOTHING;
 
 -- Public read access

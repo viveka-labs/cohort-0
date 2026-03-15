@@ -117,6 +117,12 @@ public = true
 file_size_limit = "5MiB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
 
+# Local dev bucket for user avatars
+[storage.buckets.avatars]
+public = true
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true
