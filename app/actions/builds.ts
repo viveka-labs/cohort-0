@@ -6,9 +6,17 @@ import { requireUser } from '@/lib/auth';
 import { buildRoute, Routes } from '@/lib/constants/routes';
 import { BUCKET_NAME } from '@/lib/constants/storage';
 import { clientEnv } from '@/lib/env.client';
-import { createBuildWithRelations, deleteBuild } from '@/lib/queries/builds';
+import {
+  createBuildWithRelations,
+  deleteBuild,
+  updateBuildWithRelations,
+} from '@/lib/queries/builds';
 import { createClient } from '@/lib/supabase/server';
 import { type BuildFormData, buildFormSchema } from '@/lib/validations/build';
+
+/** Matches a valid UUID v4 string. */
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Server action that creates a new build with its associated AI tools
@@ -33,15 +41,22 @@ export async function createBuildAction(data: BuildFormData) {
     return { error: 'Invalid form data' };
   }
 
-  const { ai_tool_ids, tech_stack_tag_ids, screenshot_urls, ...buildData } =
-    result.data;
+  const {
+    ai_tool_ids,
+    tech_stack_tag_ids,
+    screenshot_urls,
+    removed_screenshot_urls: _removed_screenshot_urls,
+    ...buildData
+  } = result.data;
 
   // Validate that all screenshot URLs originate from our Supabase Storage
   // bucket under the authenticated user's folder. This prevents injection
   // of arbitrary external URLs (tracking pixels, XSS via SVG, etc.).
   const allowedPrefix = `${clientEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${user.id}/`;
 
-  const hasInvalidUrl = screenshot_urls.some(
+  const screenshotUrls = screenshot_urls.map((s) => s.url);
+
+  const hasInvalidUrl = screenshotUrls.some(
     (url) => !url.startsWith(allowedPrefix)
   );
 
@@ -60,7 +75,7 @@ export async function createBuildAction(data: BuildFormData) {
       repoUrl: buildData.repo_url,
       aiToolIds: ai_tool_ids,
       techStackTagIds: tech_stack_tag_ids,
-      screenshotUrls: screenshot_urls,
+      screenshotUrls,
     });
 
     if (error || !id) {
@@ -76,9 +91,129 @@ export async function createBuildAction(data: BuildFormData) {
   redirect(buildRoute(buildId));
 }
 
-/** Matches a valid UUID v4 string. */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Server action that updates an existing build with its associated AI tools,
+ * tech stack tags, and screenshots in a single atomic database transaction.
+ *
+ * Steps:
+ * 1. Validate `buildId` format
+ * 2. Authenticate the user (redirects to login if not signed in)
+ * 3. Validate form data against the Zod schema
+ * 4. Validate that all screenshot URLs belong to the authenticated user
+ * 5. Call the `update_build_with_relations` RPC function, which updates the
+ *    build row and delete-reinserts all junction rows in one transaction
+ * 6. Redirect to the build's detail page
+ *
+ * Returns `{ error: string }` on failure so the client can display it.
+ * On success, redirects -- so the caller never receives a return value.
+ */
+export async function updateBuildAction(buildId: string, data: BuildFormData) {
+  if (!UUID_REGEX.test(buildId)) {
+    return { error: 'Invalid build ID' };
+  }
+
+  const user = await requireUser();
+
+  const result = buildFormSchema.safeParse(data);
+
+  if (!result.success) {
+    return { error: 'Invalid form data' };
+  }
+
+  const {
+    ai_tool_ids,
+    tech_stack_tag_ids,
+    screenshot_urls,
+    removed_screenshot_urls: _removed_screenshot_urls,
+    ...buildData
+  } = result.data;
+
+  // Validate that all screenshot URLs originate from our Supabase Storage
+  // bucket under the authenticated user's folder. This prevents injection
+  // of arbitrary external URLs (tracking pixels, XSS via SVG, etc.).
+  const allowedPrefix = `${clientEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${user.id}/`;
+
+  const screenshotUrls = screenshot_urls.map((s) => s.url);
+
+  const hasInvalidUrl = screenshotUrls.some(
+    (url) => !url.startsWith(allowedPrefix)
+  );
+
+  if (hasInvalidUrl) {
+    return { error: 'Invalid screenshot URL' };
+  }
+
+  // Create the Supabase client once — reused for both the DB fetch and
+  // storage deletion below.
+  const supabase = await createClient();
+
+  // Fetch the build's current screenshots BEFORE the update so we can
+  // compute a server-side diff afterward. This prevents the client from
+  // being able to trick the server into deleting files from other builds
+  // (cross-build attack within the same user account).
+  const { data: currentScreenshots } = await supabase
+    .from('build_screenshots')
+    .select('url')
+    .eq('build_id', buildId);
+  const currentUrls = currentScreenshots?.map((s) => s.url) ?? [];
+
+  let updatedBuildId: string | null = null;
+
+  try {
+    const { data: id, error } = await updateBuildWithRelations({
+      buildId,
+      title: buildData.title,
+      description: buildData.description,
+      buildType: buildData.build_type,
+      liveUrl: buildData.live_url,
+      repoUrl: buildData.repo_url,
+      aiToolIds: ai_tool_ids,
+      techStackTagIds: tech_stack_tag_ids,
+      screenshotUrls,
+    });
+
+    if (error || !id) {
+      return { error: error?.message ?? 'Failed to update build' };
+    }
+
+    updatedBuildId = id;
+
+    // Compute the diff server-side: any URL that was in the DB before the
+    // update but is NOT in the new set of URLs must have been removed.
+    const newUrlSet = new Set(screenshotUrls);
+    const urlsToDelete = currentUrls.filter((url) => !newUrlSet.has(url));
+
+    // Delete removed screenshots from storage AFTER the DB transaction
+    // succeeds. This prevents orphaned references — if the user removed a
+    // pre-existing screenshot but the DB update failed, the file would still
+    // be intact and the old DB row would still reference it correctly.
+    if (urlsToDelete.length > 0) {
+      const storagePaths = urlsToDelete
+        .filter((url) => url.startsWith(allowedPrefix))
+        .map((url) => url.slice(allowedPrefix.length));
+
+      if (storagePaths.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .remove(storagePaths);
+
+        if (storageError) {
+          // Best-effort cleanup — log but don't fail the action since the
+          // DB update already succeeded.
+          console.error(
+            'Failed to delete removed screenshots from storage:',
+            storageError
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error('updateBuildAction failed:', error);
+    return { error: 'An unexpected error occurred' };
+  }
+
+  redirect(buildRoute(updatedBuildId!));
+}
 
 /**
  * Server action that deletes a build by ID.

@@ -1,12 +1,13 @@
-'use client';
-
 import { ImagePlusIcon, Loader2Icon, XIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useRef, useState } from 'react';
+import { useController, useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { MimeType } from '@/lib/constants/mime-types';
 import { BUCKET_NAME } from '@/lib/constants/storage';
 import { createClient } from '@/lib/supabase/client';
+import type { BuildFormInput, ScreenshotEntry } from '@/lib/validations/build';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -20,64 +21,70 @@ const ACCEPT_STRING = ACCEPTED_MIME_TYPES.join(',');
 // Types
 // ---------------------------------------------------------------------------
 
-type UploadedScreenshot = {
-  url: string;
-  /** Storage path used for deletion. */
-  path: string;
-};
-
 type UploadApiResponse = {
   token: string;
   path: string;
 };
 
 // ---------------------------------------------------------------------------
-// Props
+// Helpers
 // ---------------------------------------------------------------------------
 
-type ScreenshotUploadProps = {
-  /** Called whenever the list of uploaded public URLs changes. */
-  onUrlsChange: (urls: string[]) => void;
-  /** Maximum number of screenshots allowed. Defaults to 5. */
-  maxFiles?: number;
-};
+/**
+ * Derives the Supabase Storage path from a public URL.
+ *
+ * Public URLs follow the pattern:
+ *   {SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{path}
+ *
+ * Returns the `{path}` portion, which is what the storage API needs
+ * for operations like deletion.
+ */
+export function deriveStoragePath(publicUrl: string): string {
+  const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
+  const index = publicUrl.indexOf(marker);
+
+  if (index === -1) {
+    return publicUrl;
+  }
+
+  return publicUrl.slice(index + marker.length);
+}
 
 // ---------------------------------------------------------------------------
 // ScreenshotUpload
 // ---------------------------------------------------------------------------
 
-export function ScreenshotUpload({
-  onUrlsChange,
-  maxFiles = 5,
-}: ScreenshotUploadProps) {
-  const supabase = createClient();
-  const [screenshots, setScreenshots] = useState<UploadedScreenshot[]>([]);
+export function ScreenshotUpload({ maxFiles = 5 }: { maxFiles?: number }) {
+  const { control, getValues, setValue } = useFormContext<BuildFormInput>();
+
+  // Single source of truth — no parallel useState needed.
+  const { field } = useController({
+    name: 'screenshot_urls',
+    control,
+  });
+
+  // Transient UI state — not part of the form data
   const [uploading, setUploading] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Keep a stable ref to onUrlsChange so the sync effect below only fires
-  // when `screenshots` actually changes — not on every parent re-render
-  // (react-hook-form's field.onChange is not referentially stable).
-  const onUrlsChangeRef = useRef(onUrlsChange);
-  useEffect(() => {
-    onUrlsChangeRef.current = onUrlsChange;
-  }, [onUrlsChange]);
+  // Track the initial set of screenshot URLs at mount time so we can
+  // distinguish pre-existing screenshots from newly uploaded ones.
+  const initialUrlsRef = useRef(
+    new Set(field.value.map((s: ScreenshotEntry) => s.url))
+  );
 
+  const screenshots = field.value;
   const remainingSlots = maxFiles - screenshots.length - uploading.length;
-
-  // Sync parent whenever screenshots change — avoids stale-closure issues
-  // in async callbacks that would otherwise read an outdated `screenshots`.
-  useEffect(() => {
-    onUrlsChangeRef.current(screenshots.map((s) => s.url));
-  }, [screenshots]);
 
   // -------------------------------------------------------------------------
   // Upload a single file: get signed URL -> upload to storage -> get public URL
   // -------------------------------------------------------------------------
 
   const uploadFile = useCallback(
-    async (file: File): Promise<UploadedScreenshot> => {
+    async (file: File): Promise<ScreenshotEntry> => {
+      const supabase = createClient();
+
       // 1. Request a signed upload URL from our API
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -112,117 +119,125 @@ export function ScreenshotUpload({
 
       return { url: publicUrl, path };
     },
-    [supabase]
+    []
   );
 
   // -------------------------------------------------------------------------
   // Handle file selection from the input
   // -------------------------------------------------------------------------
 
-  const handleFileChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (!files || files.length === 0) {
-        return;
-      }
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
 
-      setError(null);
+    setError(null);
 
-      // Guard: no slots available
-      if (remainingSlots <= 0) {
-        setError('Maximum screenshots reached');
-        return;
-      }
+    // Guard: no slots available
+    if (remainingSlots <= 0) {
+      setError('Maximum screenshots reached');
+      return;
+    }
 
-      // Validate total count
-      const filesToProcess = Array.from(files).slice(0, remainingSlots);
-      if (files.length > remainingSlots) {
-        setError(
-          `You can only add ${remainingSlots} more screenshot${remainingSlots === 1 ? '' : 's'}`
-        );
-      }
-
-      // Validate each file before uploading
-      const validFiles: File[] = [];
-      const validationErrors: string[] = [];
-      for (const file of filesToProcess) {
-        if (!ACCEPTED_MIME_TYPES.includes(file.type as MimeType)) {
-          validationErrors.push(
-            'Only PNG, JPEG, GIF, and WebP images are allowed'
-          );
-          continue;
-        }
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-          validationErrors.push(
-            `"${file.name}" exceeds 5 MB. Please choose a smaller file.`
-          );
-          continue;
-        }
-        validFiles.push(file);
-      }
-
-      if (validationErrors.length > 0) {
-        setError(validationErrors.join('. '));
-      }
-
-      if (validFiles.length === 0) {
-        // Reset input so the same file can be re-selected
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        return;
-      }
-
-      // Create loading entries for each file
-      const uploadingIds = validFiles.map(() => crypto.randomUUID());
-      setUploading((prev) => [...prev, ...uploadingIds]);
-
-      // Upload all valid files concurrently
-      const results = await Promise.allSettled(
-        validFiles.map((file) => uploadFile(file))
+    // Validate total count
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      setError(
+        `You can only add ${remainingSlots} more screenshot${remainingSlots === 1 ? '' : 's'}`
       );
+    }
 
-      const newScreenshots: UploadedScreenshot[] = [];
-      const errors: string[] = [];
-
-      for (const result of results) {
-        if (result.status === 'fulfilled') {
-          newScreenshots.push(result.value);
-        } else {
-          errors.push(
-            result.reason instanceof Error
-              ? result.reason.message
-              : 'Upload failed'
-          );
-        }
+    // Validate each file before uploading
+    const validFiles: File[] = [];
+    const validationErrors: string[] = [];
+    for (const file of filesToProcess) {
+      if (!ACCEPTED_MIME_TYPES.includes(file.type as MimeType)) {
+        validationErrors.push(
+          'Only PNG, JPEG, GIF, and WebP images are allowed'
+        );
+        continue;
       }
-
-      // Update state
-      setUploading((prev) => prev.filter((id) => !uploadingIds.includes(id)));
-
-      if (errors.length > 0) {
-        setError(errors.join('. '));
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        validationErrors.push(
+          `"${file.name}" exceeds 5 MB. Please choose a smaller file.`
+        );
+        continue;
       }
+      validFiles.push(file);
+    }
 
-      if (newScreenshots.length > 0) {
-        setScreenshots((prev) => [...prev, ...newScreenshots]);
-      }
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join('. '));
+    }
 
+    if (validFiles.length === 0) {
       // Reset input so the same file can be re-selected
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    },
-    [remainingSlots, uploadFile]
-  );
+      return;
+    }
+
+    // Create loading entries for each file
+    const uploadingIds = validFiles.map(() => crypto.randomUUID());
+    setUploading((prev) => [...prev, ...uploadingIds]);
+
+    // Upload all valid files concurrently
+    const results = await Promise.allSettled(
+      validFiles.map((file) => uploadFile(file))
+    );
+
+    const newScreenshots: ScreenshotEntry[] = [];
+    const errors: string[] = [];
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        newScreenshots.push(result.value);
+      } else {
+        errors.push(
+          result.reason instanceof Error
+            ? result.reason.message
+            : 'Upload failed'
+        );
+      }
+    }
+
+    // Update state
+    setUploading((prev) => prev.filter((id) => !uploadingIds.includes(id)));
+
+    if (errors.length > 0) {
+      setError(errors.join('. '));
+    }
+
+    if (newScreenshots.length > 0) {
+      // Pure update — no side effect inside a state updater.
+      // field.value is read from a ref, so it's always current.
+      field.onChange([...field.value, ...newScreenshots]);
+    }
+
+    // Reset input so the same file can be re-selected
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Remove a screenshot
   // -------------------------------------------------------------------------
 
-  const removeScreenshot = useCallback(
-    async (path: string) => {
-      // Delete the file from Supabase Storage to avoid orphaned files
+  async function removeScreenshot(path: string, url: string) {
+    const isPreExisting = initialUrlsRef.current.has(url);
+
+    if (isPreExisting) {
+      // Pre-existing screenshot: do NOT delete from storage now.
+      // Track the URL so the server action can delete after DB update.
+      const currentRemoved = getValues('removed_screenshot_urls') ?? [];
+      setValue('removed_screenshot_urls', [...currentRemoved, url]);
+    } else {
+      // Newly uploaded screenshot: safe to delete immediately since it
+      // was uploaded during this form session and has no DB reference.
+      const supabase = createClient();
       const { error: removeError } = await supabase.storage
         .from(BUCKET_NAME)
         .remove([path]);
@@ -231,11 +246,12 @@ export function ScreenshotUpload({
         setError(`Failed to delete screenshot: ${removeError.message}`);
         return;
       }
+    }
 
-      setScreenshots((prev) => prev.filter((s) => s.path !== path));
-    },
-    [supabase]
-  );
+    // Read field.value directly — it's backed by a ref, always fresh even
+    // after the await above (fixes the stale-closure bug).
+    field.onChange(field.value.filter((s: ScreenshotEntry) => s.path !== path));
+  }
 
   // -------------------------------------------------------------------------
   // Render
@@ -249,22 +265,22 @@ export function ScreenshotUpload({
       {/* Preview grid */}
       {(screenshots.length > 0 || uploading.length > 0) && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {screenshots.map((screenshot) => (
+          {screenshots.map((screenshot: ScreenshotEntry) => (
             <div
               key={screenshot.path}
               className="group relative aspect-video overflow-hidden rounded-md border bg-muted"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element --
-                  User-uploaded images with dynamic URLs; next/image requires
-                  remote domain configuration that varies per environment. */}
-              <img
+              <Image
                 src={screenshot.url}
                 alt="Build screenshot"
-                className="size-full object-cover"
+                fill
+                className="object-cover"
               />
               <button
                 type="button"
-                onClick={() => removeScreenshot(screenshot.path)}
+                onClick={() =>
+                  removeScreenshot(screenshot.path, screenshot.url)
+                }
                 className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
                 aria-label="Remove screenshot"
               >
