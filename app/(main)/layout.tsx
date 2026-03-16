@@ -8,7 +8,11 @@ export default async function MainLayout({
   children: React.ReactNode;
 }>) {
   const user = await getUser();
-  const profile = user ? (await getProfileById(user.id)).data : null;
+  const profile = user
+    ? await getProfileById(user.id)
+        .then((r) => r.data)
+        .catch(() => null)
+    : null;
 
   return (
     <div className="min-h-screen">

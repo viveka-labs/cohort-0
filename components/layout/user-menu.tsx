@@ -53,7 +53,10 @@ export function UserMenu({ profile }: UserMenuProps) {
 
       <DropdownMenuContent align="end" className="w-48">
         {profile?.display_name && (
-          <DropdownMenuLabel>{profile.display_name}</DropdownMenuLabel>
+          <>
+            <DropdownMenuLabel>{profile.display_name}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
         )}
 
         <DropdownMenuGroup>
