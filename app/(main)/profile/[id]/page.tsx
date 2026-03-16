@@ -34,11 +34,11 @@ export default async function PublicProfilePage({
   const isOwner = user?.id === profile.id;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="space-y-10">
         <ProfileHeader profile={profile} isOwner={isOwner} />
         <ProfileBuildList builds={builds ?? []} />
       </div>
-    </main>
+    </div>
   );
 }
