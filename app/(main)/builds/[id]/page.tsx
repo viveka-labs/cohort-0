@@ -56,121 +56,170 @@ export default async function BuildDetailPage({
   });
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      {/* Header: title + build type badge */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="font-display text-4xl text-foreground leading-tight">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+        {/* -- Main Content -- */}
+        <div className="lg:col-span-2">
+          {/* Build type badge + date + owner actions */}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Badge
+                className={cn(
+                  'font-mono text-xs',
+                  BUILD_TYPE_BADGE_CLASSES[build.build_type] ?? ''
+                )}
+              >
+                {BUILD_TYPE_LABELS[build.build_type]}
+              </Badge>
+              <span className="font-mono text-xs text-muted-foreground">
+                {formattedDate}
+              </span>
+            </div>
+            {isOwner && <BuildOwnerActions buildId={build.id} />}
+          </div>
+
+          {/* Title */}
+          <h1 className="mb-6 font-display text-4xl leading-tight text-foreground">
             {build.title}
           </h1>
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={cn(BUILD_TYPE_BADGE_CLASSES[build.build_type])}
+
+          {/* Builder info */}
+          {profile && (
+            <Link
+              href={profileRoute(profile.id)}
+              className="group mb-8 flex items-center gap-3"
             >
-              {BUILD_TYPE_LABELS[build.build_type]}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {formattedDate}
-            </span>
-          </div>
-        </div>
-
-        {isOwner && <BuildOwnerActions buildId={build.id} />}
-      </div>
-
-      {/* Builder info */}
-      {profile && (
-        <Link
-          href={profileRoute(profile.id)}
-          className="mt-6 flex items-center gap-3"
-        >
-          <Avatar size="lg">
-            {profile.avatar_url && (
-              <AvatarImage
-                src={profile.avatar_url}
-                alt={profile.display_name ?? 'Builder'}
-              />
-            )}
-            <AvatarFallback>
-              {(profile.display_name ?? 'U').charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium hover:underline">
-            {profile.display_name ?? 'Anonymous'}
-          </span>
-        </Link>
-      )}
-
-      {/* Description */}
-      <p className="mt-6 whitespace-pre-wrap text-foreground/80 leading-relaxed">
-        {build.description}
-      </p>
-
-      {/* Screenshots */}
-      <div className="mt-8">
-        <ScreenshotGallery screenshots={sortedScreenshots} />
-      </div>
-
-      {/* AI tools */}
-      {build.ai_tools.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-            AI Tools
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {build.ai_tools.map((tool) => (
-              <Badge key={tool.id} variant="outline">
-                {tool.name}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tech stack tags */}
-      {build.tech_stack_tags.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
-            Tech Stack
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {build.tech_stack_tags.map((tag) => (
-              <Badge key={tag.id} variant="secondary">
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Links */}
-      {(build.live_url || build.repo_url) && (
-        <div className="mt-8 flex flex-wrap gap-4">
-          {build.live_url && (
-            <a
-              href={build.live_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-            >
-              <ExternalLinkIcon className="size-4" />
-              Live Demo
-            </a>
+              <Avatar size="lg">
+                {profile.avatar_url && (
+                  <AvatarImage
+                    src={profile.avatar_url}
+                    alt={profile.display_name ?? 'Builder'}
+                  />
+                )}
+                <AvatarFallback>
+                  {(profile.display_name ?? 'U').charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <span className="text-sm font-semibold text-foreground group-hover:underline">
+                  {profile.display_name ?? 'Anonymous'}
+                </span>
+              </div>
+            </Link>
           )}
-          {build.repo_url && (
-            <a
-              href={build.repo_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-            >
-              <ExternalLinkIcon className="size-4" />
-              Source Code
-            </a>
+
+          {/* Description */}
+          <p className="mb-8 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/80">
+            {build.description}
+          </p>
+
+          {/* Screenshots */}
+          {sortedScreenshots.length > 0 && (
+            <div className="mb-8">
+              <h2 className="mb-4 font-display text-lg text-foreground">
+                Screenshots
+              </h2>
+              <ScreenshotGallery screenshots={sortedScreenshots} />
+            </div>
+          )}
+
+          {/* Links */}
+          {(build.live_url || build.repo_url) && (
+            <div className="mb-8 flex flex-wrap gap-3">
+              {build.repo_url && (
+                <a
+                  href={build.repo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/80"
+                >
+                  <ExternalLinkIcon className="size-4" />
+                  View Repo
+                </a>
+              )}
+              {build.live_url && (
+                <a
+                  href={build.live_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-zinc-300 hover:bg-muted"
+                >
+                  <ExternalLinkIcon className="size-4" />
+                  Live Demo
+                </a>
+              )}
+            </div>
           )}
         </div>
-      )}
+
+        {/* -- Sidebar -- */}
+        <div className="flex flex-col gap-4 lg:col-span-1">
+          {/* AI Tools card */}
+          {build.ai_tools.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h4 className="mb-3 font-display text-sm text-foreground">
+                AI Tools Used
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {build.ai_tools.map((tool) => (
+                  <span
+                    key={tool.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-sm font-medium text-foreground"
+                  >
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    {tool.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tech Stack card */}
+          {build.tech_stack_tags.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h4 className="mb-3 font-display text-sm text-foreground">
+                Tech Stack
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {build.tech_stack_tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="rounded border border-border bg-muted px-2.5 py-1 font-mono text-xs text-muted-foreground"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Build Info card */}
+          <div className="rounded-xl border border-border bg-card p-6">
+            <h4 className="mb-3 font-display text-sm text-foreground">
+              Build Info
+            </h4>
+            <dl className="flex flex-col gap-3 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Type</dt>
+                <dd>
+                  <Badge
+                    className={cn(
+                      'font-mono text-xs',
+                      BUILD_TYPE_BADGE_CLASSES[build.build_type] ?? ''
+                    )}
+                  >
+                    {BUILD_TYPE_LABELS[build.build_type]}
+                  </Badge>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Posted</dt>
+                <dd className="font-medium text-foreground">{formattedDate}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
