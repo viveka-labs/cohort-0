@@ -13,7 +13,7 @@ export default async function MainLayout({
   return (
     <div className="min-h-screen">
       <Navbar user={user} profile={profile} />
-      <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+      <main>{children}</main>
     </div>
   );
 }
