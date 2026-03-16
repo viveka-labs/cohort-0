@@ -10,7 +10,15 @@ import { getUser } from '@/lib/auth';
 import { BUILD_TYPE_LABELS } from '@/lib/constants/builds';
 import { profileRoute } from '@/lib/constants/routes';
 import { getBuildById } from '@/lib/queries/builds';
-import { isUuid } from '@/lib/utils';
+import { cn, isUuid } from '@/lib/utils';
+
+const BUILD_TYPE_BADGE_CLASSES: Record<string, string> = {
+  app: 'bg-sky-50 text-sky-700 border border-sky-100',
+  feature: 'bg-violet-50 text-violet-700 border border-violet-100',
+  fix: 'bg-rose-50 text-rose-700 border border-rose-100',
+  automation: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+  experiment: 'bg-amber-50 text-amber-700 border border-amber-100',
+};
 
 type BuildDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -52,9 +60,14 @@ export default async function BuildDetailPage({
       {/* Header: title + build type badge */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">{build.title}</h1>
+          <h1 className="font-display text-4xl text-foreground leading-tight">
+            {build.title}
+          </h1>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">
+            <Badge
+              variant="outline"
+              className={cn(BUILD_TYPE_BADGE_CLASSES[build.build_type])}
+            >
               {BUILD_TYPE_LABELS[build.build_type]}
             </Badge>
             <span className="text-sm text-muted-foreground">
@@ -90,7 +103,7 @@ export default async function BuildDetailPage({
       )}
 
       {/* Description */}
-      <p className="mt-6 whitespace-pre-wrap text-muted-foreground leading-relaxed">
+      <p className="mt-6 whitespace-pre-wrap text-foreground/80 leading-relaxed">
         {build.description}
       </p>
 
@@ -102,7 +115,7 @@ export default async function BuildDetailPage({
       {/* AI tools */}
       {build.ai_tools.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
             AI Tools
           </h2>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -118,7 +131,7 @@ export default async function BuildDetailPage({
       {/* Tech stack tags */}
       {build.tech_stack_tags.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
             Tech Stack
           </h2>
           <div className="mt-2 flex flex-wrap gap-2">
