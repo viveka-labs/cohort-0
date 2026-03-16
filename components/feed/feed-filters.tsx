@@ -161,7 +161,7 @@ export function FeedFilters({ aiTools }: FeedFiltersProps) {
   // -------------------------------------------------------------------------
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-2">
       {/* Filter controls row */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Build Type toggles */}

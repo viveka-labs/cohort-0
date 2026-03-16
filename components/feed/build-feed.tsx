@@ -36,7 +36,7 @@ export function BuildFeed({
   if (builds.length === 0) {
     if (hasActiveFilters) {
       return (
-        <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+        <div className="flex flex-col items-center justify-center gap-4 py-32 text-center">
           <p className="text-muted-foreground">No builds match your filters.</p>
           <Button asChild variant="outline">
             <Link href={Routes.HOME}>Clear filters</Link>
@@ -46,8 +46,8 @@ export function BuildFeed({
     }
 
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-        <p className="text-muted-foreground">
+      <div className="flex flex-col items-center justify-center gap-4 py-32 text-center">
+        <p className="font-display text-xl text-muted-foreground">
           No builds yet. Be the first to share what you&apos;ve built!
         </p>
         <Button asChild>

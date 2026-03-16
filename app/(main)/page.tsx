@@ -154,7 +154,7 @@ export default async function HomePage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Builds</h1>
+      <h1 className="mb-6 font-display text-3xl text-foreground">Builds</h1>
 
       {/* FeedFilters uses useSearchParams() so it needs its own Suspense boundary */}
       <Suspense fallback={null}>
