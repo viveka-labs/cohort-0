@@ -17,7 +17,7 @@ export default async function LoginPage({
       <div className="rounded-2xl border border-border bg-card p-8">
         {/* Logo + heading */}
         <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex size-14 items-center justify-center rounded-xl bg-primary">
+          <div className="mb-4 inline-flex size-14 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <HardhatIcon size={28} />
           </div>
           <h1 className="mb-1 font-display text-2xl text-foreground">

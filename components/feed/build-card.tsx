@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ImagePlaceholderIcon } from '@/components/ui/icons';
+import { CheckerboardPlaceholder } from '@/components/ui/checkerboard-placeholder';
 import {
   BUILD_TYPE_BADGE_CLASSES,
   BUILD_TYPE_LABELS,
@@ -58,22 +58,7 @@ export function BuildCard({ build }: BuildCardProps) {
               className="object-cover"
             />
           ) : (
-            <div
-              className="flex h-full w-full items-center justify-center"
-              style={{
-                backgroundImage: `
-                  linear-gradient(45deg, #E4E4E7 25%, transparent 25%),
-                  linear-gradient(-45deg, #E4E4E7 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #E4E4E7 75%),
-                  linear-gradient(-45deg, transparent 75%, #E4E4E7 75%)
-                `,
-                backgroundSize: '20px 20px',
-                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                backgroundColor: '#F4F4F5',
-              }}
-            >
-              <ImagePlaceholderIcon size={32} />
-            </div>
+            <CheckerboardPlaceholder />
           )}
         </div>
 

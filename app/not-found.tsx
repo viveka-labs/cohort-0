@@ -7,7 +7,7 @@ import { Routes } from '@/lib/constants/routes';
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
-      <div className="mb-2 inline-flex size-14 items-center justify-center rounded-xl bg-primary">
+      <div className="mb-2 inline-flex size-14 items-center justify-center rounded-xl bg-primary text-primary-foreground">
         <HardhatIcon size={28} />
       </div>
       <h1 className="font-display text-3xl text-foreground">Page not found</h1>

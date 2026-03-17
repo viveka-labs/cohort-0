@@ -5,25 +5,24 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { HardhatIcon } from '@/components/ui/icons';
 import { Routes } from '@/lib/constants/routes';
-import { cn } from '@/lib/utils';
 import type { Profile } from '@/types';
 
+import { NavLink } from './nav-link';
 import { UserMenu } from './user-menu';
 
 interface NavbarProps {
   user: User | null;
   profile: Profile | null;
-  pathname?: string;
 }
 
-export function Navbar({ user, profile, pathname }: NavbarProps) {
+export function Navbar({ user, profile }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo + Tagline */}
         <div className="flex items-center gap-3">
           <Link href={Routes.HOME} className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <HardhatIcon size={20} />
             </div>
             <div>
@@ -36,17 +35,9 @@ export function Navbar({ user, profile, pathname }: NavbarProps) {
             </div>
           </Link>
 
-          <Link
-            href={Routes.FEED}
-            className={cn(
-              'ml-4 text-sm transition-colors hover:text-foreground',
-              pathname === Routes.FEED || pathname === Routes.HOME
-                ? 'font-medium text-foreground'
-                : 'text-muted-foreground'
-            )}
-          >
+          <NavLink href={Routes.FEED} activeOn={[Routes.HOME]} className="ml-4">
             Feed
-          </Link>
+          </NavLink>
         </div>
 
         {/* Right side actions */}

@@ -34,9 +34,9 @@ export const buildFormSchema = z.object({
     .string()
     .min(1, { error: 'Description is required' })
     .max(2000, { error: 'Description is too long' }),
-  build_type: z
-    .union([z.enum(buildTypeValues), z.literal('')])
-    .refine((val) => val !== '', { message: 'Please select a build type' }),
+  build_type: z.enum(buildTypeValues, {
+    error: 'Please select a build type',
+  }),
   live_url: optionalUrl,
   repo_url: optionalUrl,
   ai_tool_ids: z

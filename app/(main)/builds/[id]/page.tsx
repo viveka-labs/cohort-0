@@ -164,7 +164,7 @@ export default async function BuildDetailPage({
               <div className="flex size-14 items-center justify-center rounded-xl border-2 border-amber-600 bg-amber-50">
                 <UpvoteIcon size={24} className="text-amber-600" />
               </div>
-              <span className="font-display text-2xl font-bold text-foreground">
+              <span className="font-display text-2xl text-foreground">
                 {build.upvote_count}
               </span>
               <span className="text-xs text-muted-foreground">upvotes</span>

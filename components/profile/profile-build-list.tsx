@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
+import { CheckerboardPlaceholder } from '@/components/ui/checkerboard-placeholder';
 import { UpvoteIcon } from '@/components/ui/icons';
 import {
   BUILD_TYPE_BADGE_CLASSES,
@@ -87,20 +88,7 @@ function ProfileBuildItem({ build }: { build: BuildWithDetails }) {
               className="size-full object-cover"
             />
           ) : (
-            <div
-              className="size-full"
-              style={{
-                backgroundImage: `
-                  linear-gradient(45deg, #E4E4E7 25%, transparent 25%),
-                  linear-gradient(-45deg, #E4E4E7 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, #E4E4E7 75%),
-                  linear-gradient(-45deg, transparent 75%, #E4E4E7 75%)
-                `,
-                backgroundSize: '20px 20px',
-                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                backgroundColor: '#F4F4F5',
-              }}
-            />
+            <CheckerboardPlaceholder showIcon={false} />
           )}
         </div>
 

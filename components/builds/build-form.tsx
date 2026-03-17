@@ -107,7 +107,7 @@ export function BuildForm({
         : {
             title: '',
             description: '',
-            build_type: '',
+            build_type: undefined,
             live_url: '',
             repo_url: '',
             ai_tool_ids: [],

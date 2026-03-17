@@ -19,7 +19,7 @@ export const BUILD_TYPE_LABELS: Record<BuildType, string> = {
  *
  * Used on feed cards, build detail, and profile build lists.
  */
-export const BUILD_TYPE_BADGE_CLASSES: Record<string, string> = {
+export const BUILD_TYPE_BADGE_CLASSES: Record<BuildType, string> = {
   app: 'bg-sky-50 text-sky-700 border border-sky-100',
   feature: 'bg-violet-50 text-violet-700 border border-violet-100',
   fix: 'bg-rose-50 text-rose-700 border border-rose-100',
