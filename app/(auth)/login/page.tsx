@@ -1,9 +1,6 @@
-import Link from 'next/link';
-
 import { AuthErrorAlert } from '@/components/auth/auth-error-alert';
 import { OAuthButtons } from '@/components/auth/oauth-buttons';
 import { HardhatIcon } from '@/components/ui/icons';
-import { Routes } from '@/lib/constants/routes';
 
 export default async function LoginPage({
   searchParams,
@@ -21,10 +18,10 @@ export default async function LoginPage({
             <HardhatIcon size={28} />
           </div>
           <h1 className="mb-1 font-display text-2xl text-foreground">
-            Welcome back
+            Welcome to Bob the Builder
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sign in to your account to continue
+            Sign in or create an account to start building
           </p>
         </div>
 
@@ -37,13 +34,7 @@ export default async function LoginPage({
         <OAuthButtons />
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link
-            href={Routes.SIGNUP}
-            className="font-semibold text-primary transition-colors hover:text-primary/80"
-          >
-            Sign up
-          </Link>
+          By continuing, you agree to our terms of service.
         </p>
       </div>
     </div>

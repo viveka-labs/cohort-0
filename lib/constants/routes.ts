@@ -2,7 +2,6 @@ export const Routes = {
   HOME: '/',
   FEED: '/',
   LOGIN: '/login',
-  SIGNUP: '/signup',
   AUTH_CALLBACK: '/auth/callback',
   BUILD_NEW: '/builds/new',
   PROFILE_SETTINGS: '/profile/settings',

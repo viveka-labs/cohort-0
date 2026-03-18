@@ -4,6 +4,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: import.meta.dirname,
   },
+  async redirects() {
+    return [
+      {
+        source: '/signup',
+        destination: '/login',
+        permanent: true,
+      },
+    ];
+  },
   images: {
     // Required for local Supabase Docker (localhost resolves to a private IP).
     // Only enabled in development — never expose in production.
