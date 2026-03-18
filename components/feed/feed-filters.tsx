@@ -221,11 +221,11 @@ export function FeedFilters({ aiTools }: FeedFiltersProps) {
                           className={cn(
                             'flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary',
                             isSelected
-                              ? 'bg-primary text-primary-foreground'
+                              ? 'bg-primary text-white'
                               : 'opacity-50 [&_svg]:invisible'
                           )}
                         >
-                          <CheckIcon className="size-3" />
+                          <CheckIcon className="size-3 text-white stroke-[3]" />
                         </div>
                         {tool.name}
                       </CommandItem>
