@@ -7,7 +7,6 @@ import { HardhatIcon } from '@/components/ui/icons';
 import { Routes } from '@/lib/constants/routes';
 import type { Profile } from '@/types';
 
-import { NavLink } from './nav-link';
 import { UserMenu } from './user-menu';
 
 interface NavbarProps {
@@ -34,10 +33,6 @@ export function Navbar({ user, profile }: NavbarProps) {
               </span>
             </div>
           </Link>
-
-          <NavLink href={Routes.FEED} activeOn={[Routes.HOME]} className="ml-4">
-            Feed
-          </NavLink>
         </div>
 
         {/* Right side actions */}
