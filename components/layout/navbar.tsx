@@ -52,14 +52,9 @@ export function Navbar({ user, profile }: NavbarProps) {
           {user ? (
             <UserMenu profile={profile} />
           ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={Routes.LOGIN}>Log in</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href={Routes.SIGNUP}>Sign up</Link>
-              </Button>
-            </>
+            <Button size="sm" asChild>
+              <Link href={Routes.LOGIN}>Log in</Link>
+            </Button>
           )}
         </div>
       </div>

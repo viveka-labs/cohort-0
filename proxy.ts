@@ -26,12 +26,7 @@ import { updateSession } from '@/lib/supabase/proxy';
  * API routes are included here because they handle their own auth
  * (returning 401 JSON responses instead of HTML redirects).
  */
-const PUBLIC_PATHS = [
-  Routes.LOGIN,
-  Routes.SIGNUP,
-  Routes.AUTH_CALLBACK,
-  '/api',
-] as const;
+const PUBLIC_PATHS = [Routes.LOGIN, Routes.AUTH_CALLBACK, '/api'] as const;
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => pathname.startsWith(path));

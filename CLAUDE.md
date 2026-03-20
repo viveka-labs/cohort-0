@@ -79,7 +79,7 @@ types/
 
 ### Route Groups
 
-- `(auth)` -- Login/signup pages with their own layout
+- `(auth)` -- Login page with its own layout
 - `(main)` -- Authenticated app pages with shared navigation layout
 
 ### Server-Only Queries
