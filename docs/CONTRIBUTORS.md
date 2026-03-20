@@ -9,4 +9,5 @@
 7. Mayuresh Bhosale
 8. Ritika Shakkerwal
 9. Tanvi Sharma
-10. Vivekita Banyal
+10. Vaishnavi Arora
+11. Vivekita Banyal
