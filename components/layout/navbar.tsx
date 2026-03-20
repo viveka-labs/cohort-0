@@ -8,6 +8,7 @@ import { Routes } from '@/lib/constants/routes';
 import type { Profile } from '@/types';
 
 import { NavLink } from './nav-link';
+import { ThemeToggle } from './theme-toggle';
 import { UserMenu } from './user-menu';
 
 interface NavbarProps {
@@ -42,6 +43,8 @@ export function Navbar({ user, profile }: NavbarProps) {
 
         {/* Right side actions */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
+
           <Button asChild size="sm">
             <Link href={Routes.BUILD_NEW}>
               <Plus data-icon="inline-start" />
