@@ -1,12 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  CheckIcon,
-  ChevronsUpDownIcon,
-  Loader2Icon,
-  XIcon,
-} from 'lucide-react';
+import { ChevronsUpDownIcon, Loader2Icon, XIcon } from 'lucide-react';
 import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -26,6 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { CommandCheckbox } from '@/components/ui/command-checkbox';
 import {
   Form,
   FormControl,
@@ -414,16 +410,7 @@ function MultiSelectCombobox({
                       value={item.label}
                       onSelect={() => toggleItem(item.value)}
                     >
-                      <div
-                        className={cn(
-                          'flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary',
-                          isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'opacity-50 [&_svg]:invisible'
-                        )}
-                      >
-                        <CheckIcon className="size-3 stroke-[3] text-primary-foreground" />
-                      </div>
+                      <CommandCheckbox isSelected={isSelected} />
                       {item.label}
                     </CommandItem>
                   );

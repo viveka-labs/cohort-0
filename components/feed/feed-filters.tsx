@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckIcon, ChevronsUpDownIcon, XIcon } from 'lucide-react';
+import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
@@ -14,6 +14,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { CommandCheckbox } from '@/components/ui/command-checkbox';
 import {
   Popover,
   PopoverContent,
@@ -217,16 +218,7 @@ export function FeedFilters({ aiTools }: FeedFiltersProps) {
                         value={tool.name}
                         onSelect={() => toggleAiTool(tool.id)}
                       >
-                        <div
-                          className={cn(
-                            'flex size-4 shrink-0 items-center justify-center rounded-sm border border-primary',
-                            isSelected
-                              ? 'bg-primary text-primary-foreground'
-                              : 'opacity-50 [&_svg]:invisible'
-                          )}
-                        >
-                          <CheckIcon className="size-3 stroke-[3] text-primary-foreground" />
-                        </div>
+                        <CommandCheckbox isSelected={isSelected} />
                         {tool.name}
                       </CommandItem>
                     );
