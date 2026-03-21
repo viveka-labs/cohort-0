@@ -57,6 +57,8 @@ export interface FeedFilters {
   buildTypes?: BuildType[];
   /** Restrict results to builds that use at least one of these AI tools. */
   aiToolIds?: string[];
+  /** 1-based page number for pagination. Defaults to 1. */
+  page?: number;
 }
 
 // ---------------------------------------------------------------------------
