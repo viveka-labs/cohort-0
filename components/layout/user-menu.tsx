@@ -81,6 +81,7 @@ export function UserMenu({ profile }: UserMenuProps) {
 
         <DropdownMenuGroup>
           <DropdownMenuItem
+            variant="destructive"
             onSelect={() => signOutFormRef.current?.requestSubmit()}
           >
             <LogOut />
