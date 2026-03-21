@@ -32,3 +32,6 @@ export const BUILD_TYPE_PARAM = 'buildType';
 
 /** URL search param key for AI tool filters. */
 export const AI_TOOL_PARAM = 'aiTool';
+
+/** URL search param key for the current page number. */
+export const PAGE_PARAM = 'page';

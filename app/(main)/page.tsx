@@ -7,6 +7,7 @@ import {
   AI_TOOL_PARAM,
   BUILD_TYPE_LABELS,
   BUILD_TYPE_PARAM,
+  PAGE_PARAM,
 } from '@/lib/constants/builds';
 import { getAiTools } from '@/lib/queries/ai-tools';
 import { getBuilds } from '@/lib/queries/builds';
@@ -19,6 +20,9 @@ import type { BuildType, FeedFilters as FeedFiltersType } from '@/types';
 /** Number of skeleton cards shown while the feed is loading. */
 const SKELETON_COUNT = 6;
 
+/** Maximum number of builds returned per page. */
+const BUILDS_PAGE_SIZE = 20;
+
 /** Set of valid build type values for validation. */
 const VALID_BUILD_TYPES = new Set<string>(Object.keys(BUILD_TYPE_LABELS));
 
@@ -26,56 +30,98 @@ const VALID_BUILD_TYPES = new Set<string>(Object.keys(BUILD_TYPE_LABELS));
 // Search param parsing helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Parses a comma-separated `buildType` param into valid BuildType values.
- * Invalid values are silently dropped.
- */
 function parseBuildTypes(raw: string | undefined): BuildType[] {
   if (!raw) {
     return [];
   }
-
   return raw
     .split(',')
     .filter((value): value is BuildType => VALID_BUILD_TYPES.has(value));
 }
 
-/**
- * Parses a comma-separated `aiTool` param into an array of IDs.
- * Returns the raw split — server-side validation happens in the query
- * (non-matching IDs simply return no results).
- */
 function parseAiToolIds(raw: string | undefined): string[] {
   if (!raw) {
     return [];
   }
-
   return raw.split(',').filter(Boolean);
+}
+
+function parsePage(raw: string | undefined): number {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : 1;
+}
+
+/** Build a URL that preserves existing search params but changes the page. */
+function buildPageHref(
+  rawParams: Record<string, string | string[] | undefined>,
+  page: number
+): string {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(rawParams)) {
+    if (key !== PAGE_PARAM && typeof value === 'string') {
+      params.set(key, value);
+    }
+  }
+
+  if (page > 1) {
+    params.set(PAGE_PARAM, String(page));
+  }
+
+  const qs = params.toString();
+  return qs ? `/?${qs}` : '/';
 }
 
 // ---------------------------------------------------------------------------
 // Feed (async, Suspense-ready)
 // ---------------------------------------------------------------------------
 
-/**
- * Async server component that fetches and renders the build feed.
- * Wrapped in a Suspense boundary by the parent page so Next.js can
- * stream the skeleton fallback while data loads.
- *
- * Accepts optional filters that are forwarded to `getBuilds()`.
- */
-async function Feed({ filters }: { filters?: FeedFiltersType }) {
+async function Feed({
+  filters,
+  currentPage,
+  rawParams,
+}: {
+  filters?: FeedFiltersType;
+  currentPage: number;
+  rawParams: Record<string, string | string[] | undefined>;
+}) {
   const hasActiveFilters =
     (filters?.buildTypes?.length ?? 0) > 0 ||
     (filters?.aiToolIds?.length ?? 0) > 0;
 
-  const { data: builds, error } = await getBuilds(filters);
+  const {
+    data: builds,
+    count,
+    error,
+  } = await getBuilds({
+    ...filters,
+    page: currentPage,
+  });
 
   if (error) {
     throw error;
   }
 
-  return <BuildFeed builds={builds} hasActiveFilters={hasActiveFilters} />;
+  const totalCount = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / BUILDS_PAGE_SIZE));
+  const prevHref =
+    currentPage > 1 ? buildPageHref(rawParams, currentPage - 1) : null;
+  const nextHref =
+    currentPage < totalPages ? buildPageHref(rawParams, currentPage + 1) : null;
+
+  return (
+    <BuildFeed
+      builds={builds ?? []}
+      hasActiveFilters={hasActiveFilters}
+      pagination={{
+        currentPage,
+        totalPages,
+        totalCount,
+        prevHref,
+        nextHref,
+      }}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -96,18 +142,6 @@ function FeedSkeleton() {
 // HomePage
 // ---------------------------------------------------------------------------
 
-/**
- * Public home page that displays the build feed with filter controls.
- *
- * Auth note: This page is accessible to both authenticated and anonymous
- * users. The `builds` table has a public SELECT RLS policy, so the feed
- * query works without authentication. The `(main)` layout provides shared
- * navigation but does not enforce auth.
- *
- * Filters are read from URL search params and applied server-side:
- * - `?buildType=app,feature` — comma-separated build types
- * - `?aiTool=uuid1,uuid2` — comma-separated AI tool IDs
- */
 export default async function HomePage({
   searchParams,
 }: {
@@ -115,8 +149,6 @@ export default async function HomePage({
 }) {
   const resolvedParams = await searchParams;
 
-  // Parse filter values from URL search params.
-  // Values can be string | string[] | undefined — we only handle strings.
   const rawBuildType =
     typeof resolvedParams[BUILD_TYPE_PARAM] === 'string'
       ? resolvedParams[BUILD_TYPE_PARAM]
@@ -125,11 +157,15 @@ export default async function HomePage({
     typeof resolvedParams[AI_TOOL_PARAM] === 'string'
       ? resolvedParams[AI_TOOL_PARAM]
       : undefined;
+  const rawPage =
+    typeof resolvedParams[PAGE_PARAM] === 'string'
+      ? resolvedParams[PAGE_PARAM]
+      : undefined;
 
   const buildTypes = parseBuildTypes(rawBuildType);
   const aiToolIds = parseAiToolIds(rawAiTool);
+  const currentPage = parsePage(rawPage);
 
-  // Build the filters object. Only include non-empty arrays.
   const filters: FeedFiltersType | undefined =
     buildTypes.length > 0 || aiToolIds.length > 0
       ? {
@@ -138,18 +174,16 @@ export default async function HomePage({
         }
       : undefined;
 
-  // Fetch AI tools for the filter controls (server-side).
   const { data: aiTools, error: aiToolsError } = await getAiTools();
-
   if (aiToolsError) {
     throw aiToolsError;
   }
 
-  // Serialize search params into a stable key so changing filters
-  // triggers a new Suspense boundary and re-shows the skeleton.
+  // Include page in the key so changing page re-triggers the skeleton.
   const suspenseKey = [
     [...buildTypes].sort().join(','),
     [...aiToolIds].sort().join(','),
+    String(currentPage),
   ].join('|');
 
   return (
@@ -178,7 +212,11 @@ export default async function HomePage({
 
       <div className="mt-6">
         <Suspense key={suspenseKey} fallback={<FeedSkeleton />}>
-          <Feed filters={filters} />
+          <Feed
+            filters={filters}
+            currentPage={currentPage}
+            rawParams={resolvedParams}
+          />
         </Suspense>
       </div>
     </div>
