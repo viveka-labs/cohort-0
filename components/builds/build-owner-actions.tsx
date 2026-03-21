@@ -39,7 +39,12 @@ export function BuildOwnerActions({ buildId }: BuildOwnerActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" asChild>
+      <Button
+        variant="outline"
+        size="sm"
+        className="border-amber-600/40 text-amber-700 hover:border-amber-600 hover:bg-amber-50 hover:text-amber-800"
+        asChild
+      >
         <Link href={buildEditRoute(buildId)}>
           <PencilIcon />
           Edit
@@ -48,7 +53,12 @@ export function BuildOwnerActions({ buildId }: BuildOwnerActionsProps) {
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm" disabled={isPending}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground"
+            disabled={isPending}
+          >
             {isPending ? (
               <Loader2Icon className="animate-spin" />
             ) : (
