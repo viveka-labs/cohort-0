@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CheckerboardPlaceholder } from '@/components/ui/checkerboard-placeholder';
+import { AiToolChip } from '@/components/ui/tool-chip';
 import {
   BUILD_TYPE_BADGE_CLASSES,
   BUILD_TYPE_LABELS,
@@ -75,13 +76,12 @@ export function BuildCard({ build }: BuildCardProps) {
               {BUILD_TYPE_LABELS[build.build_type]}
             </Badge>
             {visibleTools.map((tool) => (
-              <Badge
+              <AiToolChip
                 key={tool.id}
-                variant="outline"
-                className="font-mono text-xs"
-              >
-                {tool.name}
-              </Badge>
+                name={tool.name}
+                slug={tool.slug}
+                size="sm"
+              />
             ))}
             {overflowCount > 0 && (
               <Badge variant="outline" className="font-mono text-xs">

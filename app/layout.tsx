@@ -1,12 +1,12 @@
 import './globals.css';
 
 import type { Metadata } from 'next';
-import { DM_Serif_Display, Geist, Geist_Mono } from 'next/font/google';
+import { DM_Serif_Display, Geist_Mono, Montserrat } from 'next/font/google';
 
 import { Toaster } from '@/components/ui/sonner';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const montserrat = Montserrat({
+  variable: '--font-montserrat',
   subsets: ['latin'],
 });
 
@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${dmSerifDisplay.variable} antialiased`}
+        className={`${montserrat.variable} ${geistMono.variable} ${dmSerifDisplay.variable} antialiased`}
       >
         {children}
         <Toaster />
