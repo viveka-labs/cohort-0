@@ -16,9 +16,9 @@ export default async function MainLayout({
     : null;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="grid min-h-screen grid-rows-[auto_1fr_auto]">
       <Navbar user={user} profile={profile} />
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="pb-16">{children}</main>
       <Footer />
     </div>
   );
